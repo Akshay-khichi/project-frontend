@@ -149,66 +149,73 @@ export default function App() {
           <Routes location={location} key={location.pathname}>
 
             {/* ── Public ──────────────────────────── */}
-            <Route path="/" element={<PageWrapper><Landing /></PageWrapper>} />
+<Route path="/" element={<PageWrapper><Landing /></PageWrapper>} />
 
-            <Route path="/login" element={
-              <GuestRoute>
-                <PageWrapper><Login /></PageWrapper>
-              </GuestRoute>
-            } />
+<Route path="/login" element={
+  <GuestRoute>
+    <PageWrapper><Login /></PageWrapper>
+  </GuestRoute>
+} />
 
-       
+<Route path="/premium" element={
+  <div style={{ paddingTop: '64px' }}>
+    <PageWrapper><Premium /></PageWrapper>
+  </div>
+} />
 
-            <Route path="/premium" element={
-              <div style={{ paddingTop: '64px' }}>
-                <PageWrapper><Premium /></PageWrapper>
-              </div>
-            } />
+{/* ── Subject Selection Page (Homepage for notes) ──────────────── */}
+{/* Subject selection page: /notes → shows Physics/Chemistry/Math cards */}
+<Route path="/notes" element={
+  <ProtectedRoute>
+    <div style={{ paddingTop: '64px' }}>
+      <PageWrapper><Notes /></PageWrapper>
+    </div>
+  </ProtectedRoute>
+} />
 
-            {/* ── Student (protected) ──────────────── */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <div style={{ paddingTop: '64px' }}>
-                  <PageWrapper><Dashboard /></PageWrapper>
-                </div>
-              </ProtectedRoute>
-            } />
+{/* Chapter grid: /notes/:subject → shows chapters for selected subject */}
+<Route path="/notes/:subject" element={
+  <ProtectedRoute>
+    <div style={{ paddingTop: '64px' }}>
+      <PageWrapper><Notes /></PageWrapper>  {/* ← Same Notes component */}
+    </div>
+  </ProtectedRoute>
+} />
 
-            <Route path="/notes" element={
-              <ProtectedRoute>
-                <div style={{ paddingTop: '64px' }}>
-                  <PageWrapper><Notes /></PageWrapper>
-                </div>
-              </ProtectedRoute>
-            } />
+{/* Chapter detail: /notes/:subject/:chapterId → PDF viewer */}
+<Route path="/notes/:subject/:chapterId" element={
+  <ProtectedRoute>
+    <div style={{ paddingTop: '64px' }}>
+      <PageWrapper><NoteDetail /></PageWrapper>
+    </div>
+  </ProtectedRoute>
+} />
 
-            <Route path="/notes/:id" element={
-              <ProtectedRoute>
-                <div style={{ paddingTop: '64px' }}>
-                  <PageWrapper><NoteDetail /></PageWrapper>
-                </div>
-              </ProtectedRoute>
-            } />
+{/* Keep existing PYQ routes */}
+{/* PYQs Routes */}
+<Route path="/pyqs" element={
+  <ProtectedRoute>
+    <div style={{ paddingTop: '64px' }}>
+      <PageWrapper><PYQs /></PageWrapper>
+    </div>
+  </ProtectedRoute>
+} />
 
-            <Route path="/pyqs" element={
-              <ProtectedRoute>
-                <div style={{ paddingTop: '64px' }}>
-                  <PageWrapper><PYQs /></PageWrapper>
-                </div>
-              </ProtectedRoute>
-            } />
+<Route path="/pyqs/:subject" element={
+  <ProtectedRoute>
+    <div style={{ paddingTop: '64px' }}>
+      <PageWrapper><PYQs /></PageWrapper>
+    </div>
+  </ProtectedRoute>
+} />
 
-            <Route path="/pyqs/:id" element={
-              <ProtectedRoute>
-                <div style={{ paddingTop: '64px' }}>
-                  <PageWrapper>
-                    <Suspense fallback={<AppLoader />}>
-                      <PYQDetail />
-                    </Suspense>
-                  </PageWrapper>
-                </div>
-              </ProtectedRoute>
-            } />
+<Route path="/pyqs/:subject/:paperId" element={
+  <ProtectedRoute>
+    <div style={{ paddingTop: '64px' }}>
+      <PageWrapper><PYQDetail /></PageWrapper>
+    </div>
+  </ProtectedRoute>
+} />
 
             {/* ── Admin (role-gated) ───────────────── */}
             <Route path="/admin" element={

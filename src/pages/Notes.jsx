@@ -1,362 +1,373 @@
-import { useState, useCallback } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
-import { Search, BookOpen, Lock, Eye, Filter, ChevronDown, X, LayoutGrid, List } from 'lucide-react'
-import { notesAPI, categoriesAPI } from '@/api/axios'
+import { useNavigate, useParams } from 'react-router-dom'
+import { 
+  Search, BookOpen, X, ChevronRight, FileText, Download, 
+  ExternalLink, Calculator, Atom, FlaskConical, Ruler, 
+  ArrowRight, TrendingUp, Activity, Scale, RotateCcw, Orbit, 
+  Zap, Waves, Eye, Layers, Terminal as TerminalIcon, Cpu, 
+  Menu, Sigma, Pi, FlaskRound, Lock
+} from 'lucide-react'
 import { useStore } from '@/store/useStore'
-import PremiumLock from '@/components/premium/PremiumLock'
-import { SkeletonList } from '@/components/common/SkeletonCard'
 
-const SORT_OPTIONS = [
-  { value: '-createdAt', label: 'Newest First' },
-  { value:  'createdAt', label: 'Oldest First' },
-  { value: '-downloadCount', label: 'Most Popular' },
-  { value:  'title',     label: 'A → Z' },
+// Homepage Subjects - Sky Blue Theme
+const SUBJECTS = [
+  { id: 'physics', name: 'Physics', icon: Atom, color: 'from-sky-500 to-blue-600', chapters: 30, topics: 150 },
+  { id: 'chemistry', name: 'Chemistry', icon: FlaskConical, color: 'from-sky-500 to-blue-600', chapters: 31, topics: 163 },
+  { id: 'mathematics', name: 'Mathematics', icon: Calculator, color: 'from-sky-500 to-blue-600', chapters: 31, topics: 198 }
 ]
 
-function NoteCard({ note, hasAccess, onView, viewMode }) {
-  const isPremium = note.unitNumber > 2
+// Physics Chapters - ALL PREMIUM
+const PHYSICS_CHAPTERS = [
+  { id: 'math-physics', name: 'Mathematics in Physics', topics: 5, icon: Calculator, premium: true },
+  { id: 'units-dimensions', name: 'Units and Dimensions', topics: 2, icon: Ruler, premium: true },
+  { id: 'motion-1d', name: 'Motion in One Dimension', topics: 5, icon: ArrowRight, premium: true },
+  { id: 'motion-2d', name: 'Motion in Two Dimensions', topics: 3, icon: TrendingUp, premium: true },
+  { id: 'laws-motion', name: 'Laws of Motion', topics: 5, icon: Activity, premium: true },
+  { id: 'work-energy', name: 'Work Power Energy', topics: 4, icon: Zap, premium: true },
+  { id: 'com', name: 'Center of Mass Momentum and Collision', topics: 7, icon: Scale, premium: true },
+  { id: 'rotational', name: 'Rotational Motion', topics: 5, icon: RotateCcw, premium: true },
+  { id: 'gravitation', name: 'Gravitation', topics: 6, icon: Orbit, premium: true },
+  { id: 'solids', name: 'Mechanical Properties of Solids', topics: 5, icon: BookOpen, premium: true },
+  { id: 'fluids', name: 'Mechanical Properties of Fluids', topics: 7, icon: Waves, premium: true },
+  { id: 'thermal', name: 'Thermal Properties of Matter', topics: 6, icon: Activity, premium: true },
+  { id: 'thermodynamics', name: 'Thermodynamics', topics: 4, icon: Zap, premium: true },
+  { id: 'kinetic', name: 'Kinetic Theory of Gases', topics: 3, icon: Atom, premium: true },
+  { id: 'oscillations', name: 'Oscillations', topics: 5, icon: Waves, premium: true },
+  { id: 'waves-sound', name: 'Waves and Sound', topics: 10, icon: Waves, premium: true },
+  { id: 'electrostatics', name: 'Electrostatics', topics: 5, icon: Zap, premium: true },
+  { id: 'capacitance', name: 'Capacitance', topics: 5, icon: Activity, premium: true },
+  { id: 'current-electricity', name: 'Current Electricity', topics: 8, icon: Zap, premium: true },
+  { id: 'magnetic-effects', name: 'Magnetic Effects of Current', topics: 5, icon: Activity, premium: true },
+  { id: 'magnetism', name: 'Magnetic Properties of Matter', topics: 4, icon: Activity, premium: true },
+  { id: 'emi', name: 'Electromagnetic Induction', topics: 5, icon: Zap, premium: true },
+  { id: 'ac', name: 'Alternating Current', topics: 3, icon: Waves, premium: true },
+  { id: 'ray-optics', name: 'Ray Optics', topics: 7, icon: Eye, premium: true },
+  { id: 'wave-optics', name: 'Wave Optics', topics: 5, icon: Waves, premium: true },
+  { id: 'atomic', name: 'Atomic Physics', topics: 4, icon: Atom, premium: true },
+  { id: 'dual-nature', name: 'Dual Nature of Matter', topics: 4, icon: Atom, premium: true },
+  { id: 'nuclear', name: 'Nuclear Physics', topics: 4, icon: Atom, premium: true },
+  { id: 'semiconductors', name: 'Semiconductors', topics: 7, icon: Activity, premium: true },
+  { id: 'communication', name: 'Communication System', topics: 2, icon: Waves, premium: true }
+]
 
-  const CardInner = (
-    <div className={`card h-full flex ${viewMode === 'list' ? 'flex-row items-center gap-4' : 'flex-col'} relative overflow-hidden`}>
-      {/* Unit badge */}
-      <div className={`${viewMode === 'list' ? 'flex-shrink-0' : 'mb-3'}`}>
-        <div className={`${viewMode === 'list' ? 'w-10 h-10' : 'w-10 h-10 mb-3'} rounded-xl flex items-center justify-center`}
-             style={{ background: 'rgba(245,166,35,0.08)', border: '1px solid rgba(245,166,35,0.12)' }}>
-          <BookOpen className="w-5 h-5 text-amber-400" />
-        </div>
-      </div>
+// Chemistry Chapters - ALL PREMIUM
+const CHEMISTRY_CHAPTERS = [
+  { id: 'basic-concepts', name: 'Some Basic Concepts of Chemistry', topics: 2, icon: FlaskConical, premium: true },
+  { id: 'atom-structure', name: 'Structure of Atom', topics: 7, icon: Atom, premium: true },
+  { id: 'classification', name: 'Classification of Elements and Periodicity', topics: 3, icon: Layers, premium: true },
+  { id: 'chemical-bonding', name: 'Chemical Bonding and Molecular Structure', topics: 10, icon: Zap, premium: true },
+  { id: 'states-matter', name: 'States of Matter', topics: 5, icon: Waves, premium: true },
+  { id: 'thermodynamics-c', name: 'Thermodynamics (C)', topics: 5, icon: Activity, premium: true },
+  { id: 'equilibrium', name: 'Chemical Equilibrium', topics: 2, icon: Scale, premium: true },
+  { id: 'ionic-equilibrium', name: 'Ionic Equilibrium', topics: 6, icon: Zap, premium: true },
+  { id: 'redox', name: 'Redox Reactions', topics: 6, icon: Activity, premium: true },
+  { id: 'hydrogen', name: 'Hydrogen', topics: 4, icon: Waves, premium: true },
+  { id: 's-block', name: 's Block Elements', topics: 5, icon: BookOpen, premium: true },
+  { id: 'p-block-1', name: 'p Block Elements (Group 13 & 14)', topics: 4, icon: BookOpen, premium: true },
+  { id: 'organic-chem', name: 'General Organic Chemistry', topics: 8, icon: FlaskConical, premium: true },
+  { id: 'hydrocarbons', name: 'Hydrocarbons', topics: 10, icon: Activity, premium: true },
+  { id: 'solid-state', name: 'Solid State', topics: 6, icon: BookOpen, premium: true },
+  { id: 'solutions', name: 'Solutions', topics: 3, icon: Waves, premium: true },
+  { id: 'electrochemistry', name: 'Electrochemistry', topics: 5, icon: Zap, premium: true },
+  { id: 'kinetics', name: 'Chemical Kinetics', topics: 4, icon: Activity, premium: true },
+  { id: 'surface-chem', name: 'Surface Chemistry', topics: 7, icon: FlaskConical, premium: true },
+  { id: 'p-block-2', name: 'p Block Elements (Group 15, 16, 17 & 18)', topics: 6, icon: BookOpen, premium: true },
+  { id: 'd-f-block', name: 'd and f Block Elements', topics: 3, icon: Atom, premium: true },
+  { id: 'coordination', name: 'Coordination Compounds', topics: 7, icon: Activity, premium: true },
+  { id: 'principles', name: 'General Principles and Processes of Isolation', topics: 5, icon: BookOpen, premium: true },
+  { id: 'haloalkanes', name: 'Haloalkanes and Haloarenes', topics: 4, icon: FlaskConical, premium: true },
+  { id: 'alcohols', name: 'Alcohols Phenols and Ethers', topics: 10, icon: FlaskConical, premium: true },
+  { id: 'aldehydes', name: 'Aldehydes and Ketones', topics: 5, icon: FlaskConical, premium: true },
+  { id: 'carboxylic', name: 'Carboxylic Acid Derivatives', topics: 5, icon: FlaskConical, premium: true },
+  { id: 'amines', name: 'Amines', topics: 4, icon: FlaskConical, premium: true },
+  { id: 'biomolecules', name: 'Biomolecules', topics: 5, icon: Atom, premium: true },
+  { id: 'practical', name: 'Practical Chemistry', topics: 4, icon: FlaskConical, premium: true },
+  { id: 'everyday', name: 'Chemistry in Everyday Life', topics: 3, icon: FlaskConical, premium: true }
+]
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <h3 className="font-display font-600 text-ice-100 text-sm leading-snug line-clamp-2">{note.title}</h3>
-          {isPremium
-            ? <span className="badge-premium text-[10px] flex-shrink-0"><Lock className="w-2.5 h-2.5" />Premium</span>
-            : <span className="badge-free text-[10px] flex-shrink-0">Free</span>
-          }
-        </div>
+// Mathematics Chapters - ALL PREMIUM
+const MATHEMATICS_CHAPTERS = [
+  { id: 'quadratic', name: 'Quadratic Equation', topics: 7, icon: Calculator, premium: true },
+  { id: 'complex', name: 'Complex Number', topics: 7, icon: Calculator, premium: true },
+  { id: 'perm-comb', name: 'Permutation Combination', topics: 9, icon: Calculator, premium: true },
+  { id: 'sequences', name: 'Sequences and Series', topics: 8, icon: Calculator, premium: true },
+  { id: 'binomial', name: 'Binomial Theorem', topics: 6, icon: Calculator, premium: true },
+  { id: 'trig-ratios', name: 'Trigonometric Ratios & Identities', topics: 6, icon: Calculator, premium: true },
+  { id: 'trig-eq', name: 'Trigonometric Equations', topics: 1, icon: Calculator, premium: true },
+  { id: 'triangles', name: 'Properties of Triangles', topics: 5, icon: Calculator, premium: true },
+  { id: 'straight-lines', name: 'Straight Lines', topics: 7, icon: Calculator, premium: true },
+  { id: 'circle', name: 'Circle', topics: 12, icon: Calculator, premium: true },
+  { id: 'parabola', name: 'Parabola', topics: 12, icon: Calculator, premium: true },
+  { id: 'ellipse', name: 'Ellipse', topics: 13, icon: Calculator, premium: true },
+  { id: 'hyperbola', name: 'Hyperbola', topics: 14, icon: Calculator, premium: true },
+  { id: 'limits', name: 'Limits', topics: 6, icon: Calculator, premium: true },
+  { id: 'matrices', name: 'Matrices', topics: 8, icon: Calculator, premium: true },
+  { id: 'determinants', name: 'Determinants', topics: 4, icon: Calculator, premium: true },
+  { id: 'inverse-trig', name: 'Inverse Trigonometric Functions', topics: 7, icon: Calculator, premium: true },
+  { id: 'functions', name: 'Functions', topics: 12, icon: Calculator, premium: true },
+  { id: 'continuity', name: 'Continuity and Differentiability', topics: 2, icon: Calculator, premium: true },
+  { id: 'differentiation', name: 'Differentiation', topics: 6, icon: Calculator, premium: true },
+  { id: 'app-derivatives', name: 'Application of Derivatives', topics: 4, icon: Calculator, premium: true },
+  { id: 'indefinite-int', name: 'Indefinite Integration', topics: 5, icon: Calculator, premium: true },
+  { id: 'definite-int', name: 'Definite Integration', topics: 6, icon: Calculator, premium: true },
+  { id: 'area-curves', name: 'Area Under Curves', topics: 3, icon: Calculator, premium: true },
+  { id: 'differential-eq', name: 'Differential Equations', topics: 8, icon: Calculator, premium: true },
+  { id: 'vectors', name: 'Vector Algebra', topics: 4, icon: Calculator, premium: true },
+  { id: '3d-geo', name: 'Three Dimensional Geometry', topics: 4, icon: Calculator, premium: true },
+  { id: 'probability', name: 'Probability', topics: 6, icon: Calculator, premium: true },
+  { id: 'math-reasoning', name: 'Mathematical Reasoning', topics: 1, icon: Calculator, premium: true },
+  { id: 'statistics', name: 'Statistics', topics: 4, icon: Calculator, premium: true },
+  { id: 'linear-prog', name: 'Linear Programming', topics: 1, icon: Calculator, premium: true }
+]
 
-        <p className="text-xs text-ice-500 mb-2">
-          {note.subject?.name} · Unit {note.unitNumber}
-        </p>
-
-        {note.description && viewMode !== 'list' && (
-          <p className="text-xs text-ice-400 leading-relaxed line-clamp-2 mb-3">{note.description}</p>
-        )}
-
-        <div className="flex items-center gap-3 text-[10px] text-ice-600 font-mono mt-auto">
-          <span>{note.downloadCount ?? 0} views</span>
-          <span>·</span>
-          <span>{note.branch?.name}</span>
-          <span>·</span>
-          <span>Sem {note.semester?.name}</span>
-        </div>
-      </div>
-
-      {/* Action */}
-      {!isPremium || hasAccess ? (
-        <button
-          onClick={() => onView(note)}
-          className="mt-4 btn-ghost w-full justify-center text-xs py-2.5 pdf-interactive"
-          style={viewMode === 'list' ? { width: 'auto', marginTop: 0 } : {}}
-        >
-          <Eye className="w-3.5 h-3.5" />
-          View
-        </button>
-      ) : null}
-    </div>
-  )
-
-  if (isPremium && !hasAccess) {  
-    return (
-      <PremiumLock locked variant="card">
-        {CardInner}
-      </PremiumLock>
-    )
-  }
-
-  return CardInner
+const CHAPTERS_DATA = {
+  physics: PHYSICS_CHAPTERS,
+  chemistry: CHEMISTRY_CHAPTERS,
+  mathematics: MATHEMATICS_CHAPTERS
 }
 
-export default function Notes() {
-  const navigate  = useNavigate()
-  const { hasAccess } = useStore()
-
-  const [search,   setSearch]   = useState('')
-  const [branch,   setBranch]   = useState('')
-  const [semester, setSemester] = useState('')
-  const [subject,  setSubject]  = useState('')
-  const [sort,     setSort]     = useState('-createdAt')
-  const [page,     setPage]     = useState(1)
-  const [viewMode, setViewMode] = useState('grid')
-  const [filtersOpen, setFiltersOpen] = useState(false)
-
-  const LIMIT = 12
-
-  // ── Categories ─────────────────────────────────
-  const { data: categories } = useQuery({
-    queryKey: ['categories'],
-    queryFn:  () => categoriesAPI.list().then((r) => r.data.categories),
-    staleTime: 10 * 60 * 1000,
-  })
-
-  const branches  = categories?.filter((c) => c.type === 'branch')   || []
-  const semesters = categories?.filter((c) => c.type === 'semester' && (!branch || c.parent === branch)) || []
-  const subjects  = categories?.filter((c) => c.type === 'subject'  && (!semester || c.parent === semester)) || []
-
-  // ── Notes Query ────────────────────────────────
-  const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['notes', { search, branch, semester, subject, sort, page }],
-    queryFn: () =>
-      notesAPI.list({
-        search: search || undefined,
-        branch: branch || undefined,
-        semester: semester || undefined,
-        subject: subject || undefined,
-        sort,
-        page,
-        limit: LIMIT,
-      }).then((r) => r.data),
-    staleTime: 2 * 60 * 1000,
-    keepPreviousData: true,
-  })
-
-  const notes      = data?.notes      || []
-  const totalPages = data?.totalPages || 1
-
-  const resetFilters = () => {
-    setSearch(''); setBranch(''); setSemester(''); setSubject(''); setSort('-createdAt'); setPage(1)
-  }
-
-  const handleView = useCallback((note) => {
-    navigate(`/notes/${note._id}`)
-  }, [navigate])
-
-  const hasFilters = search || branch || semester || subject
+// PDF Viewer Modal - Sky Blue Theme
+const PDFViewer = ({ chapter, subject, onClose }) => {
+  const [loading, setLoading] = useState(true)
+  const pdfUrl = `https://res.cloudinary.com/your-cloud-name/image/upload/v1/${subject}/${chapter.id}.pdf`
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-      {/* ── Header ──────────────────────────────── */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <p className="section-label mb-2">Study Material</p>
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <h1 className="font-display font-800 text-3xl sm:text-4xl text-ice-100">Notes Library</h1>
-            <p className="text-ice-400 mt-1 text-sm">
-              Unit 1 & 2 free · Unit 3+ requires{' '}
-              <span className="text-amber-400">Premium</span>
-            </p>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        className="w-full max-w-6xl h-[90vh] bg-gray-900 rounded-2xl border border-gray-700 overflow-hidden flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-4 border-b border-gray-800 bg-gray-950">
+          <div className="flex items-center gap-3">
+            <FileText className="w-5 h-5 text-sky-400" />
+            <span className="text-gray-200 font-semibold">{chapter.name}</span>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${viewMode === 'grid' ? 'bg-amber-400/10 text-amber-400' : 'text-ice-500 hover:text-ice-300'}`}
-              style={{ border: viewMode === 'grid' ? '1px solid rgba(245,166,35,0.25)' : '1px solid rgba(255,255,255,0.05)' }}
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${viewMode === 'list' ? 'bg-amber-400/10 text-amber-400' : 'text-ice-500 hover:text-ice-300'}`}
-              style={{ border: viewMode === 'list' ? '1px solid rgba(245,166,35,0.25)' : '1px solid rgba(255,255,255,0.05)' }}
-            >
-              <List className="w-4 h-4" />
+            <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-sm flex items-center gap-2 transition-all">
+              <ExternalLink className="w-4 h-4" /> Open
+            </a>
+            <a href={pdfUrl} download className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm flex items-center gap-2 transition-all">
+              <Download className="w-4 h-4" /> Download
+            </a>
+            <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-lg transition-colors ml-2">
+              <X className="w-5 h-5 text-gray-400" />
             </button>
           </div>
         </div>
-      </motion.div>
-
-      {/* ── Search + Filters Bar ─────────────────── */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-6 space-y-3">
-        <div className="flex gap-3">
-          {/* Search */}
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ice-500" />
-            <input
-              className="input pl-11 pr-4"
-              placeholder="Search notes…"
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-            />
-          </div>
-
-          {/* Filter toggle (mobile) */}
-          <button
-            onClick={() => setFiltersOpen((f) => !f)}
-            className={`px-4 rounded-xl flex items-center gap-2 text-sm transition-all sm:hidden ${filtersOpen ? 'bg-amber-400/10 text-amber-400' : 'btn-ghost'}`}
-            style={{ border: filtersOpen ? '1px solid rgba(245,166,35,0.25)' : undefined }}
-          >
-            <Filter className="w-4 h-4" />
-            Filters
-          </button>
-
-          {/* Sort */}
-          <div className="relative hidden sm:block">
-            <select
-              className="input pr-8 text-sm appearance-none cursor-pointer"
-              value={sort}
-              onChange={(e) => { setSort(e.target.value); setPage(1) }}
-              style={{ minWidth: 160 }}
-            >
-              {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ice-500 pointer-events-none" />
-          </div>
-        </div>
-
-        {/* Cascade Filters — desktop always visible, mobile toggle */}
-        <AnimatePresence>
-          {(filtersOpen || window.innerWidth >= 640) && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="grid grid-cols-1 sm:grid-cols-3 gap-3 overflow-hidden"
-            >
-              {/* Branch */}
-              <div className="relative">
-                <select className="input text-sm appearance-none cursor-pointer" value={branch}
-                  onChange={(e) => { setBranch(e.target.value); setSemester(''); setSubject(''); setPage(1) }}>
-                  <option value="">All Branches</option>
-                  {branches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ice-500 pointer-events-none" />
-              </div>
-
-              {/* Semester */}
-              <div className="relative">
-                <select className="input text-sm appearance-none cursor-pointer" value={semester}
-                  onChange={(e) => { setSemester(e.target.value); setSubject(''); setPage(1) }} disabled={!branch}>
-                  <option value="">All Semesters</option>
-                  {semesters.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ice-500 pointer-events-none" />
-              </div>
-
-              {/* Subject */}
-              <div className="relative">
-                <select className="input text-sm appearance-none cursor-pointer" value={subject}
-                  onChange={(e) => { setSubject(e.target.value); setPage(1) }} disabled={!semester}>
-                  <option value="">All Subjects</option>
-                  {subjects.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ice-500 pointer-events-none" />
-              </div>
-            </motion.div>
+        <div className="flex-1 relative bg-gray-950">
+          {loading && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-12 h-12 border-2 border-sky-500/20 border-t-sky-400 rounded-full" />
+            </div>
           )}
-        </AnimatePresence>
-
-        {/* Active filters + clear */}
-        {hasFilters && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-ice-500">Active filters:</span>
-            {search   && <FilterChip label={`"${search}"`}  onRemove={() => setSearch('')} />}
-            {branch   && <FilterChip label={branches.find(b=>b._id===branch)?.name}    onRemove={() => { setBranch(''); setSemester(''); setSubject('') }} />}
-            {semester && <FilterChip label={semesters.find(s=>s._id===semester)?.name} onRemove={() => { setSemester(''); setSubject('') }} />}
-            {subject  && <FilterChip label={subjects.find(s=>s._id===subject)?.name}   onRemove={() => setSubject('')} />}
-            <button onClick={resetFilters} className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors ml-1">
-              <X className="w-3 h-3" /> Clear all
-            </button>
-          </div>
-        )}
+          <iframe src={pdfUrl} className="w-full h-full" onLoad={() => setLoading(false)} title={chapter.name} />
+        </div>
       </motion.div>
+    </motion.div>
+  )
+}
 
-      {/* ── Results ─────────────────────────────── */}
-      {isLoading ? (
-        <SkeletonList count={LIMIT} />
-      ) : notes.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className={
-            viewMode === 'grid'
-              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
-              : 'flex flex-col gap-3'
-          }
-        >
-          {notes.map((note, i) => (
-            <motion.div
-              key={note._id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.04 }}
-            >
-              <NoteCard
-                note={note}
-                hasAccess={hasAccess(note.unitNumber)}
-                onView={handleView}
-                viewMode={viewMode}
-              />
-            </motion.div>
-          ))}
-        </motion.div>
-      )}
+// Chapter Card Component - ALL PREMIUM + Sky Blue
+const ChapterCard = ({ chapter, hasAccess, onClick, subject }) => {
+  const IconComponent = chapter.icon
+  const isPremium = true // ALL chapters are premium
 
-      {/* ── Pagination ──────────────────────────── */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-10">
-          <button
-            onClick={() => setPage((p) => Math.max(p - 1, 1))}
-            disabled={page === 1 || isFetching}
-            className="btn-ghost text-sm px-4 py-2 disabled:opacity-30"
-          >
-            Previous
-          </button>
-          <div className="flex items-center gap-1">
-            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-              const p = page <= 3 ? i + 1 : page - 2 + i
-              if (p < 1 || p > totalPages) return null
-              return (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  className="w-9 h-9 rounded-xl text-sm font-mono transition-all"
-                  style={{
-                    background: p === page ? 'rgba(245,166,35,0.15)' : 'transparent',
-                    border: p === page ? '1px solid rgba(245,166,35,0.3)' : '1px solid rgba(255,255,255,0.05)',
-                    color: p === page ? '#F5A623' : '#9299C4',
-                  }}
-                >
-                  {p}
-                </button>
-              )
-            })}
-          </div>
-          <button
-            onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-            disabled={page === totalPages || isFetching}
-            className="btn-ghost text-sm px-4 py-2 disabled:opacity-30"
-          >
-            Next
-          </button>
+  return (
+    <motion.div
+      whileHover={{ y: -2 }}
+      onClick={() => (!isPremium || hasAccess(3)) && onClick(chapter)}
+      className={`card p-5 cursor-pointer group relative  overflow-hidden bg-gray-800/50 border border-gray-700 rounded-xl hover:border-sky-500/50 transition-all ${isPremium && !hasAccess(3) ? 'opacity-60' : ''}`}
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-sky-500/20 to-sky-600/10 border border-sky-500/20 group-hover:border-sky-500/40 transition-colors">
+          <IconComponent className="w-5 h-5 text-sky-400" />
+        </div>
+        {isPremium && (
+          <span className="badge-premium text-[12px] bg-sky-500/10 border border-sky-500/20 text-white text-semibold px-2 py-1 rounded-lg flex items-center gap-1">
+            <Lock className="w-2.5 h-2.5" />Premium
+          </span>
+        )}
+      </div>
+      <h3 className="font-display font-600 text-ice-100 text-sm mb-2 line-clamp-2 group-hover:text-sky-400 transition-colors">
+        {chapter.name}
+      </h3>
+      <p className="text-xs text-ice-500">{chapter.topics} {chapter.topics === 1 ? 'Topic' : 'Topics'}</p>
+      {isPremium && !hasAccess(3) && (
+        <div className="absolute inset-0 bg-ink-900/60 backdrop-blur-[1px] flex items-center justify-center">
+          <Lock className="w-6 h-6 text-sky-400" />
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }
 
-function FilterChip({ label, onRemove }) {
-  return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs"
-          style={{ background: 'rgba(245,166,35,0.08)', border: '1px solid rgba(245,166,35,0.2)', color: '#F5A623' }}>
-      {label}
-      <button onClick={onRemove} className="hover:text-amber-200"><X className="w-3 h-3" /></button>
-    </span>
-  )
-}
+// Subject Page Component (Chapter Grid) - Sky Blue Theme
+const SubjectPage = () => {
+  const navigate = useNavigate()
+  const { subject } = useParams()
+  const { hasAccess } = useStore()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedChapter, setSelectedChapter] = useState(null)
+  const [chapters, setChapters] = useState([])
 
-function EmptyState() {
+  useEffect(() => {
+    const subjectChapters = CHAPTERS_DATA[subject] || []
+    setChapters(subjectChapters)
+  }, [subject])
+
+  const filteredChapters = chapters.filter(chapter => 
+    chapter.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const totalTopics = chapters.reduce((acc, c) => acc + c.topics, 0)
+  const subjectNames = { physics: 'Physics', chemistry: 'Chemistry', mathematics: 'Mathematics' }
+
   return (
-    <div className="text-center py-24">
-      <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
-           style={{ background: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.1)' }}>
-        <BookOpen className="w-8 h-8 text-ice-600" />
+    <div className="min-h-screen bg-ink-900">
+      {/* Header - Sky Blue */}
+      <div className="sticky top-0 z-40 bg-ink-900/80 backdrop-blur-md border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <button onClick={() => navigate('/notes')} className="w-9 h-9 rounded-xl flex items-center justify-center text-ice-500 hover:text-ice-300 hover:bg-white/5 transition-all">
+                <ChevronRight className="w-4 h-4 rotate-180" />
+              </button>
+              <div>
+                <h1 className="font-display font-700 text-ice-100 text-lg">{subjectNames[subject] || 'Loading...'}</h1>
+                <p className="text-xs text-ice-500">{chapters.length} Chapters, {totalTopics} Topics</p>
+              </div>
+            </div>
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ice-500" />
+              <input 
+                type="text" 
+                placeholder="Search chapters..." 
+                value={searchQuery} 
+                onChange={(e) => setSearchQuery(e.target.value)} 
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-ice-100 placeholder:text-ice-600 focus:outline-none focus:border-sky-500/50 focus:bg-white/[0.07] transition-all text-sm" 
+              />
+            </div>
+          </div>
+        </div>
       </div>
-      <p className="font-display font-600 text-ice-300 mb-1">No notes found</p>
-      <p className="text-sm text-ice-600">Try adjusting your filters or search term</p>
+
+      {/* Chapters Grid */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        {chapters.length === 0 ? (
+          <div className="text-center py-24">
+            <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center bg-white/5">
+              <BookOpen className="w-8 h-8 text-ice-600" />
+            </div>
+            <p className="font-display font-600 text-ice-300 mb-1">No chapters available</p>
+            <p className="text-sm text-ice-600">Subject: {subject}</p>
+          </div>
+        ) : filteredChapters.length === 0 ? (
+          <div className="text-center py-24">
+            <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center bg-white/5">
+              <Search className="w-8 h-8 text-ice-600" />
+            </div>
+            <p className="font-display font-600 text-ice-300 mb-1">No chapters found</p>
+            <p className="text-sm text-ice-600">Try adjusting your search term</p>
+          </div>
+        ) : (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredChapters.map((chapter, index) => (
+              <motion.div key={chapter.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.03 }}>
+                <ChapterCard chapter={chapter} hasAccess={hasAccess} onClick={setSelectedChapter} subject={subject} />
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </div>
+
+      <AnimatePresence>
+        {selectedChapter && <PDFViewer chapter={selectedChapter} subject={subject} onClose={() => setSelectedChapter(null)} />}
+      </AnimatePresence>
     </div>
   )
+}
+
+// Homepage Component (3 Subject Cards) - Sky Blue Theme
+const Homepage = () => {
+  const navigate = useNavigate()
+
+  return (
+    <div className="min-h-screen bg-ink-950 relative overflow-hidden">
+      <div className="fixed inset-0 bg-gradient-to-br from-ink-950 via-ink-900 to-ink-950" />
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-900/20 via-transparent to-transparent" />
+      
+      <div className="relative z-10 min-h-screen flex flex-col">
+        <header className="p-6 md:p-8">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg shadow-sky-500/25">
+                <BookOpen className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">EduVault</h1>
+                <p className="text-xs text-ice-500">Premium Study Materials</p>
+              </div>
+            </motion.div>
+          </div>
+        </header>
+
+        <main className="flex-1 flex items-center justify-center p-6 md:p-12">
+          <div className="max-w-6xl mx-auto w-full">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-center mb-16">
+              <h2 className="text-4xl md:text-6xl font-bold text-white mb-4 tracking-tight">
+                Choose Your <span className="bg-gradient-to-r from-sky-400 via-blue-500 to-sky-600 bg-clip-text text-transparent">Subject</span>
+              </h2>
+              <p className="text-ice-400 text-lg max-w-2xl mx-auto">Access premium study materials, notes, and resources for JEE & Engineering exams</p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+              {SUBJECTS.map((subject, index) => (
+                <motion.div
+                  key={subject.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  whileHover={{ scale: 1.02, y: -5 }}
+                  onClick={() => navigate(`/notes/${subject.id}`)}
+                  className={`group relative bg-gray-900/40 backdrop-blur-sm border border-gray-800 rounded-3xl p-8 cursor-pointer overflow-hidden transition-all duration-300 hover:border-sky-500/50 hover:shadow-2xl hover:shadow-sky-500/10`}
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-br ${subject.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
+                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${subject.color} flex items-center justify-center mb-6 shadow-lg`}>
+                    <subject.icon className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-300 transition-all">{subject.name}</h3>
+                  <div className="flex items-center gap-4 text-xs text-ice-500 mb-4">
+                    <div className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" /><span>{subject.chapters} Chapters</span></div>
+                    <div className="w-1 h-1 bg-gray-700 rounded-full" />
+                    <div className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5" /><span>{subject.topics} Topics</span></div>
+                  </div>
+                  <div className="absolute bottom-8 right-8 opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all duration-300">
+                    <ChevronRight className="w-6 h-6 text-sky-400" />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  )
+}
+
+// Main Component: Route based on URL param
+export default function Notes() {
+  const { subject } = useParams()
+
+  // If subject exists in URL → show chapter grid, else show homepage
+  return subject ? <SubjectPage /> : <Homepage />
 }
