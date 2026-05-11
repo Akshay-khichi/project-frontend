@@ -1,0 +1,647 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&family=Fredoka+One&display=swap');
+*{box-sizing:border-box}
+#ctv-wrap{padding:3px;background:linear-gradient(135deg,#ff6eb4,#ffcc00,#00e5ff,#b44dff);background-size:300% 300%;animation:wrapGrad 4s ease infinite;border-radius:20px;box-shadow:0 8px 40px rgba(255,100,180,.35),0 0 0 1px rgba(255,255,255,.15)}
+@keyframes wrapGrad{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+#ctv{position:relative;width:100%;height:600px;overflow:hidden;background:#e8f4ff;font-family:'Fredoka One',cursive;border-radius:18px}
+#ctv canvas{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:18px}
+.ctv-vig{position:absolute;inset:0;pointer-events:none;z-index:4;background:radial-gradient(ellipse at 50% 60%,transparent 50%,rgba(100,60,180,.07) 100%)}
+#ctv-flash{position:absolute;inset:0;z-index:9;background:rgba(255,80,80,.3);pointer-events:none;display:none;border-radius:18px}
+
+/* START */
+#ctv-start{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#ffeef8 0%,#e8f0ff 40%,#eefff4 100%);border-radius:18px}
+.ctv-parts{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.ctv-p{position:absolute;border-radius:50%;animation:pfloat linear infinite;opacity:0}
+@keyframes pfloat{0%{transform:translateY(620px) rotate(0deg);opacity:0}8%{opacity:1}92%{opacity:1}100%{transform:translateY(-30px) rotate(360deg);opacity:0}}
+.ctv-card{position:relative;text-align:center;padding:44px 64px;background:rgba(255,255,255,.88);border:3px solid rgba(255,255,255,.95);box-shadow:0 12px 48px rgba(180,80,255,.15),0 4px 16px rgba(0,0,0,.06);border-radius:24px;backdrop-filter:blur(20px)}
+.ctv-logo{font-family:'Fredoka One',cursive;font-size:clamp(2rem,5.5vw,3.6rem);line-height:1.1;letter-spacing:.02em;background:linear-gradient(135deg,#ff4db8,#ff9500,#00cc88,#6644ff);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:logoShimmer 2.5s linear infinite;filter:drop-shadow(0 2px 8px rgba(255,80,180,.2))}
+@keyframes logoShimmer{0%{background-position:0%}100%{background-position:200%}}
+.ctv-emoji{font-size:clamp(2rem,5vw,3rem);display:block;margin-bottom:4px;animation:chicBounce 1.2s ease-in-out infinite}
+@keyframes chicBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.ctv-sub{font-family:'Nunito',sans-serif;font-weight:800;font-size:clamp(.62rem,1.8vw,.82rem);letter-spacing:.08em;color:rgba(100,80,180,.55);margin:10px 0 36px;text-transform:uppercase}
+
+/* ── FIX 1: Button — dark legible text, always visible ── */
+.ctv-sbtn{
+  display:inline-block;
+  background:linear-gradient(135deg,#ff4db8,#ff8c00);
+  border:none;border-radius:50px;padding:17px 52px;
+  color:#1a0010;          /* dark text — always readable */
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(.95rem,2.4vw,1.2rem);
+  letter-spacing:.06em;cursor:pointer;transition:all .2s;
+  box-shadow:0 6px 0 rgba(180,30,100,.45),0 8px 28px rgba(255,80,180,.3);
+  position:relative;overflow:hidden;
+  text-shadow:0 1px 0 rgba(255,255,255,.35); /* subtle lift */
+}
+.ctv-sbtn::before{content:'';position:absolute;top:-50%;left:-60%;width:40%;height:200%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:skewX(-20deg);animation:btnGlint 2.5s ease-in-out infinite}
+@keyframes btnGlint{0%,70%{left:-60%}80%,100%{left:160%}}
+.ctv-sbtn:hover{transform:translateY(-2px) scale(1.04);box-shadow:0 9px 0 rgba(180,30,100,.45),0 14px 36px rgba(255,80,180,.4);color:#1a0010}
+.ctv-sbtn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(180,30,100,.45)}
+
+.ctv-hints{display:flex;gap:14px;margin-top:24px;justify-content:center;flex-wrap:wrap}
+.ctv-hint{font-family:'Nunito',sans-serif;font-weight:800;font-size:.56rem;color:rgba(120,100,200,.5);letter-spacing:.1em;background:rgba(180,140,255,.08);padding:4px 10px;border-radius:20px;border:1px solid rgba(180,140,255,.15)}
+.ctv-bs{margin-top:16px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.6rem;color:rgba(180,80,255,.4);letter-spacing:.12em}
+
+/* HUD */
+#ctv-hud{position:absolute;top:16px;right:16px;z-index:10;text-align:right;display:none}
+#ctv-sc{font-family:'Fredoka One',cursive;font-size:clamp(2rem,5vw,3.2rem);line-height:1;background:linear-gradient(135deg,#ff4db8,#ff8c00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 2px 6px rgba(255,80,180,.4))}
+.ctv-slbl{font-family:'Nunito',sans-serif;font-weight:800;font-size:.45rem;color:rgba(150,100,200,.6);letter-spacing:.25em;text-transform:uppercase}
+#ctv-bst{font-family:'Nunito',sans-serif;font-weight:800;font-size:.55rem;color:rgba(100,80,200,.5);margin-top:2px}
+#ctv-streak{font-family:'Fredoka One',cursive;font-size:.6rem;color:#ff4db8;margin-top:2px;display:none;filter:drop-shadow(0 1px 4px rgba(255,77,184,.4))}
+
+/* PAUSE BTN */
+#ctv-pbtn{position:absolute;top:16px;left:16px;z-index:10;background:rgba(255,255,255,.85);border:2px solid rgba(180,140,255,.3);color:rgba(130,90,200,.8);font-family:'Fredoka One',cursive;font-size:.6rem;letter-spacing:.1em;padding:7px 14px;cursor:pointer;display:none;transition:all .2s;border-radius:20px;backdrop-filter:blur(10px);box-shadow:0 2px 8px rgba(180,140,255,.15)}
+#ctv-pbtn:hover{background:rgba(255,255,255,.98);border-color:rgba(255,77,184,.5);color:#ff4db8}
+
+/* COMBO */
+#ctv-combo{position:absolute;top:38%;left:50%;transform:translateX(-50%);z-index:15;pointer-events:none;display:none;white-space:nowrap}
+#ctv-combo span{font-family:'Fredoka One',cursive;font-size:clamp(1.8rem,5vw,3rem);background:linear-gradient(90deg,#ff4db8,#ff8c00,#00cc88);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 2px 12px rgba(255,80,180,.5))}
+@keyframes combopop{0%{opacity:0;transform:translateX(-50%) scale(.3) translateY(0)}28%{opacity:1;transform:translateX(-50%) scale(1.2) translateY(-14px)}68%{opacity:1;transform:translateX(-50%) scale(1.05) translateY(-22px)}100%{opacity:0;transform:translateX(-50%) scale(.9) translateY(-40px)}}
+.combo-anim{animation:combopop .65s cubic-bezier(.22,1,.36,1) forwards}
+
+/* MOBILE CONTROLS */
+#ctv-ctrls{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);z-index:10;display:none;user-select:none}
+.ctv-dpad{display:grid;grid-template-columns:58px 58px 58px;grid-template-rows:58px 58px;gap:8px}
+.ctv-dpad button{width:58px;height:58px;background:rgba(255,255,255,.82);border:2px solid rgba(180,140,255,.3);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .1s;-webkit-tap-highlight-color:transparent;border-radius:14px;backdrop-filter:blur(8px);box-shadow:0 3px 0 rgba(180,140,255,.25)}
+.ctv-dpad button:active{background:rgba(255,77,184,.15);border-color:rgba(255,77,184,.5);transform:scale(.9) translateY(2px);box-shadow:none}
+.ctv-dfwd{grid-column:1/-1}
+
+/* ACHIEVEMENT */
+#ctv-ach{position:absolute;top:68px;left:14px;z-index:25;background:rgba(255,255,255,.92);border:2px solid rgba(255,77,184,.3);padding:14px 18px;box-shadow:0 8px 24px rgba(255,77,184,.15);max-width:260px;display:none;border-radius:16px;backdrop-filter:blur(16px)}
+@keyframes slideIn{from{opacity:0;transform:translateX(-110%)}to{opacity:1;transform:translateX(0)}}
+.ach-in{animation:slideIn .38s cubic-bezier(.22,1,.36,1)}
+.ctv-aptitle{font-family:'Nunito',sans-serif;font-weight:800;font-size:.45rem;color:rgba(255,77,184,.6);letter-spacing:.2em;margin-bottom:5px;text-transform:uppercase}
+.ctv-apname{font-family:'Fredoka One',cursive;font-size:.8rem;background:linear-gradient(90deg,#ff4db8,#ff8c00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ctv-apdesc{font-family:'Nunito',sans-serif;font-weight:800;font-size:.52rem;color:rgba(100,80,160,.5);margin-top:3px}
+
+/* OVERLAYS */
+.ctv-ov{position:absolute;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(240,230,255,.9);backdrop-filter:blur(14px);border-radius:18px}
+.ctv-pnl{text-align:center;padding:44px 56px;background:rgba(255,255,255,.94);border:2px solid rgba(255,255,255,1);box-shadow:0 16px 48px rgba(180,100,255,.18),0 4px 16px rgba(0,0,0,.06);min-width:300px;border-radius:24px;position:relative}
+.ctv-ptitle{font-family:'Fredoka One',cursive;font-size:2rem;letter-spacing:.04em;margin-bottom:6px;background:linear-gradient(135deg,#ff4db8,#ff8c00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ctv-psub{font-family:'Nunito',sans-serif;font-weight:800;font-size:.55rem;color:rgba(140,100,200,.4);letter-spacing:.18em;margin-bottom:22px;text-transform:uppercase}
+.ctv-pscore{font-family:'Fredoka One',cursive;font-size:3.2rem;margin:10px 0;background:linear-gradient(135deg,#ff4db8,#ff8c00,#00cc88);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 2px 10px rgba(255,80,180,.25))}
+.ctv-pbest{font-family:'Nunito',sans-serif;font-weight:800;font-size:.6rem;color:rgba(160,100,220,.5);letter-spacing:.15em;margin-bottom:5px}
+.ctv-newbest{color:#ff4db8;-webkit-text-fill-color:#ff4db8;animation:bestPulse 1s ease-in-out infinite}
+@keyframes bestPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.ctv-btn{display:block;width:100%;background:rgba(240,230,255,.7);border:2px solid rgba(180,140,255,.3);color:rgba(110,70,190,.85);font-family:'Fredoka One',cursive;font-size:.78rem;letter-spacing:.08em;padding:13px 22px;cursor:pointer;margin:8px 0;transition:all .18s;border-radius:50px}
+.ctv-btn:hover{background:rgba(240,230,255,1);border-color:rgba(180,140,255,.6);color:#6622cc;transform:translateY(-1px);box-shadow:0 4px 14px rgba(180,140,255,.22)}
+.ctv-btn-r{background:linear-gradient(135deg,#ff4db8,#ff8c00);border-color:transparent;color:#1a0010 !important;box-shadow:0 4px 0 rgba(200,40,120,.35),0 6px 20px rgba(255,80,180,.25);font-size:.82rem}
+.ctv-btn-r:hover{transform:translateY(-2px);box-shadow:0 7px 0 rgba(200,40,120,.35),0 12px 28px rgba(255,80,180,.35);color:#1a0010 !important}
+.ctv-achs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:14px 0 0}
+.ctv-ac{background:linear-gradient(135deg,rgba(255,77,184,.1),rgba(255,140,0,.1));border:1.5px solid rgba(255,77,184,.2);padding:5px 10px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.5rem;color:rgba(200,60,150,.7);letter-spacing:.08em;border-radius:20px}
+@media(min-width:640px){#ctv-ctrls{display:none!important}}
+@keyframes shake{0%{transform:translate(0)}20%{transform:translate(-5px,4px)}40%{transform:translate(5px,-4px)}60%{transform:translate(-4px,5px)}80%{transform:translate(4px,-2px)}100%{transform:translate(0)}}
+.ctv-shk{animation:shake .35s ease-out}
+</style>
+
+<div id="ctv-wrap">
+<div id="ctv">
+  <div class="ctv-vig"></div>
+  <div id="ctv-flash"></div>
+
+  <div id="ctv-start">
+    <div class="ctv-parts" id="ctv-parts"></div>
+    <div class="ctv-card">
+      <span class="ctv-emoji">🐥</span>
+      <div class="ctv-logo">HOP HOP GO!</div>
+      <div class="ctv-sub">✨ Dodge &amp; Cross the Road ✨</div>
+      <button class="ctv-sbtn" id="ctv-sbtn">🎮 START HOPPING!</button>
+      <div class="ctv-hints">
+        <span class="ctv-hint">↑↓←→ KEYS</span>
+        <span class="ctv-hint">WASD</span>
+        <span class="ctv-hint">👆 TOUCH</span>
+      </div>
+      <div class="ctv-bs" id="ctv-bsdisplay"></div>
+    </div>
+  </div>
+
+  <div id="ctv-hud">
+    <div class="ctv-slbl">SCORE</div>
+    <div id="ctv-sc">0</div>
+    <div id="ctv-bst">🏆 BEST 0</div>
+    <div id="ctv-streak"></div>
+  </div>
+  <button id="ctv-pbtn">⏸ PAUSE</button>
+  <div id="ctv-combo"><span></span></div>
+
+  <div id="ctv-ctrls">
+    <div class="ctv-dpad">
+      <button class="ctv-dfwd" id="cb-up"><svg width="24" height="24" viewBox="0 0 10 10"><path d="M5,1.5 L9,8.5 L1,8.5 Z" fill="#ff4db8"/></svg></button>
+      <button id="cb-lt"><svg width="24" height="24" viewBox="0 0 10 10"><path d="M1.5,5 L8.5,1 L8.5,9 Z" fill="#ff4db8"/></svg></button>
+      <button id="cb-dn"><svg width="24" height="24" viewBox="0 0 10 10"><path d="M5,8.5 L1,1.5 L9,1.5 Z" fill="#ff4db8"/></svg></button>
+      <button id="cb-rt"><svg width="24" height="24" viewBox="0 0 10 10"><path d="M8.5,5 L1.5,9 L1.5,1 Z" fill="#ff4db8"/></svg></button>
+    </div>
+  </div>
+
+  <div id="ctv-ach">
+    <div class="ctv-aptitle">🌟 ACHIEVEMENT UNLOCKED</div>
+    <div class="ctv-apname" id="ctv-apname"></div>
+    <div class="ctv-apdesc" id="ctv-apdesc"></div>
+  </div>
+
+  <div class="ctv-ov" id="ctv-pause-ov">
+    <div class="ctv-pnl">
+      <div class="ctv-ptitle">☕ Chill Break</div>
+      <div class="ctv-psub">[ game paused ]</div>
+      <div class="ctv-pscore" id="ctv-pscore">0</div>
+      <button class="ctv-btn ctv-btn-r" id="ctv-resume-btn">▶ KEEP HOPPING!</button>
+      <button class="ctv-btn" id="ctv-restart-p">🔄 Restart</button>
+      <button class="ctv-btn" id="ctv-menu-p">🏠 Main Menu</button>
+    </div>
+  </div>
+
+  <div class="ctv-ov" id="ctv-go-ov">
+    <div class="ctv-pnl">
+      <div class="ctv-ptitle" style="background:linear-gradient(135deg,#ff4444,#ff8c00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">💥 Squished!</div>
+      <div class="ctv-psub">[ better luck next time! ]</div>
+      <div class="ctv-pscore" id="ctv-goscore">0</div>
+      <div class="ctv-pbest" id="ctv-gobest">🏆 BEST: 0</div>
+      <div class="ctv-achs" id="ctv-goach"></div>
+      <button class="ctv-btn ctv-btn-r" id="ctv-replay-btn" style="margin-top:14px">🐥 HOP AGAIN!</button>
+      <button class="ctv-btn" id="ctv-menu-go">🏠 Main Menu</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+const PW=42,COLS=17,BW=PW*COLS,Z=2,STEP=200,DIST=500,CHSZ=15;
+
+const V_CAR=[0xff5c5c,0xff9500,0xffcc00,0x00cc88,0x00b4ff,0xdd44ff,0xff44aa,0x44ddff];
+const V_TRUCK=[0xff7043,0xffb300,0x26c6da,0xab47bc,0x66bb6a];
+const SPDS=[1.8,2.2,2.6];
+const TRH=[18,36,52];
+const ACHS=[
+  {id:'rookie',  name:'First Hop!',  desc:'Cross 5 lanes',  icon:'🐥',req:5},
+  {id:'survivor',name:'Road Wizard', desc:'Cross 15 lanes', icon:'🌟',req:15},
+  {id:'ghost',   name:'Traffic Pro', desc:'Cross 30 lanes', icon:'🚀',req:30},
+  {id:'legend',  name:'HOP LEGEND',  desc:'Cross 50 lanes', icon:'👑',req:50},
+];
+
+const root=document.getElementById('ctv');
+const startEl=document.getElementById('ctv-start');
+const hudEl=document.getElementById('ctv-hud');
+const scEl=document.getElementById('ctv-sc');
+const bstEl=document.getElementById('ctv-bst');
+const streakEl=document.getElementById('ctv-streak');
+const pbtnEl=document.getElementById('ctv-pbtn');
+const comboEl=document.getElementById('ctv-combo');
+const comboSp=comboEl.querySelector('span');
+const ctrlsEl=document.getElementById('ctv-ctrls');
+const achEl=document.getElementById('ctv-ach');
+const pauseOv=document.getElementById('ctv-pause-ov');
+const goOv=document.getElementById('ctv-go-ov');
+const flashEl=document.getElementById('ctv-flash');
+const bsDisp=document.getElementById('ctv-bsdisplay');
+
+let gstate='start',score=0,bestScore=0,combo=0,unlocked=[],rafId=null;
+let scene,camera,renderer,chicken,sunLight,fillLight,initCamX,initCamY;
+let lanes=[],currentLane=0,currentColumn=Math.floor(COLS/2);
+let moves=[],stepStart=null,startMoving=false,prevTs=null;
+let tex={};
+
+function mkTex(w,h,rects){
+  const c=document.createElement('canvas');c.width=w;c.height=h;
+  const x=c.getContext('2d');
+  x.fillStyle='#fff8ee';x.fillRect(0,0,w,h);
+  x.fillStyle='rgba(80,40,0,.35)';
+  rects.forEach(r=>x.fillRect(r.x,r.y,r.w,r.h));
+  return new THREE.CanvasTexture(c);
+}
+function buildTextures(){
+  tex.cF =mkTex(40,80,[{x:0,y:10,w:30,h:60}]);
+  tex.cB =mkTex(40,80,[{x:10,y:10,w:30,h:60}]);
+  tex.cRS=mkTex(110,40,[{x:10,y:0,w:50,h:30},{x:70,y:0,w:30,h:30}]);
+  tex.cLS=mkTex(110,40,[{x:10,y:10,w:50,h:30},{x:70,y:10,w:30,h:30}]);
+  tex.tF =mkTex(30,30,[{x:15,y:0,w:10,h:30}]);
+  tex.tRS=mkTex(25,30,[{x:0,y:15,w:10,h:10}]);
+  tex.tLS=mkTex(25,30,[{x:0,y:5,w:10,h:10}]);
+}
+
+function mkWheel(){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(12*Z,33*Z,12*Z),
+    new THREE.MeshPhongMaterial({color:0x222222,flatShading:true}));
+  m.position.z=6*Z; return m;
+}
+
+function mkCar(){
+  const g=new THREE.Group();
+  const col=V_CAR[~~(Math.random()*V_CAR.length)];
+  const body=new THREE.Mesh(new THREE.BoxGeometry(60*Z,30*Z,15*Z),
+    new THREE.MeshPhongMaterial({color:col,flatShading:true,shininess:80}));
+  body.position.z=12*Z;body.castShadow=true;g.add(body);
+  const cab=new THREE.Mesh(new THREE.BoxGeometry(33*Z,24*Z,12*Z),[
+    new THREE.MeshPhongMaterial({color:0xffffff,flatShading:true,transparent:true,opacity:.8,map:tex.cB}),
+    new THREE.MeshPhongMaterial({color:0xffffff,flatShading:true,transparent:true,opacity:.8,map:tex.cF}),
+    new THREE.MeshPhongMaterial({color:0xffffff,flatShading:true,transparent:true,opacity:.8,map:tex.cRS}),
+    new THREE.MeshPhongMaterial({color:0xffffff,flatShading:true,transparent:true,opacity:.8,map:tex.cLS}),
+    new THREE.MeshPhongMaterial({color:0xeeeeee,flatShading:true}),
+    new THREE.MeshPhongMaterial({color:0xeeeeee,flatShading:true}),
+  ]);
+  cab.position.set(6*Z,0,25.5*Z);cab.castShadow=true;g.add(cab);
+  const hlMat=new THREE.MeshPhongMaterial({color:0xffffaa,emissive:0xffff55,emissiveIntensity:.6,flatShading:true});
+  [-8,8].forEach(yo=>{
+    const hl=new THREE.Mesh(new THREE.BoxGeometry(3*Z,6*Z,5*Z),hlMat);
+    hl.position.set(-28*Z,yo*Z,12*Z);g.add(hl);
+  });
+  const stripe=new THREE.Mesh(new THREE.BoxGeometry(55*Z,4*Z,16.5*Z),
+    new THREE.MeshPhongMaterial({color:0xffffff,flatShading:true,transparent:true,opacity:.5}));
+  stripe.position.z=12*Z;g.add(stripe);
+  const fw=mkWheel();fw.position.x=-18*Z;g.add(fw);
+  const bw=mkWheel();bw.position.x=18*Z;g.add(bw);
+  g.castShadow=true;return g;
+}
+
+function mkTruck(){
+  const g=new THREE.Group();
+  const col=V_TRUCK[~~(Math.random()*V_TRUCK.length)];
+  const base=new THREE.Mesh(new THREE.BoxGeometry(100*Z,25*Z,5*Z),
+    new THREE.MeshPhongMaterial({color:0x555555,flatShading:true}));
+  base.position.z=10*Z;g.add(base);
+  const cargo=new THREE.Mesh(new THREE.BoxGeometry(75*Z,35*Z,40*Z),
+    new THREE.MeshPhongMaterial({color:col,flatShading:true,shininess:40}));
+  cargo.position.set(15*Z,0,30*Z);cargo.castShadow=true;g.add(cargo);
+  const sM=new THREE.MeshPhongMaterial({color:0xffffff,flatShading:true,transparent:true,opacity:.3});
+  [12,26,38].forEach(z=>{
+    const s=new THREE.Mesh(new THREE.BoxGeometry(76*Z,36*Z,3*Z),sM);
+    s.position.set(15*Z,0,z*Z);g.add(s);
+  });
+  const cab=new THREE.Mesh(new THREE.BoxGeometry(25*Z,30*Z,30*Z),[
+    new THREE.MeshPhongMaterial({color:col,flatShading:true,shininess:60}),
+    new THREE.MeshPhongMaterial({color:col,flatShading:true,shininess:60,map:tex.tF}),
+    new THREE.MeshPhongMaterial({color:col,flatShading:true,shininess:60,map:tex.tRS}),
+    new THREE.MeshPhongMaterial({color:col,flatShading:true,shininess:60,map:tex.tLS}),
+    new THREE.MeshPhongMaterial({color:col,flatShading:true}),
+    new THREE.MeshPhongMaterial({color:col,flatShading:true}),
+  ]);
+  cab.position.set(-40*Z,0,20*Z);cab.castShadow=true;g.add(cab);
+  const hlMat=new THREE.MeshPhongMaterial({color:0xffffaa,emissive:0xffff44,emissiveIntensity:.5,flatShading:true});
+  [-9,9].forEach(yo=>{
+    const hl=new THREE.Mesh(new THREE.BoxGeometry(3*Z,7*Z,6*Z),hlMat);
+    hl.position.set(-52*Z,yo*Z,16*Z);g.add(hl);
+  });
+  [-38,-10,30].forEach(x=>{const w=mkWheel();w.position.x=x*Z;g.add(w);});
+  g.castShadow=true;return g;
+}
+
+function mkTree(){
+  const g=new THREE.Group();
+  const trunk=new THREE.Mesh(new THREE.BoxGeometry(14*Z,14*Z,20*Z),
+    new THREE.MeshPhongMaterial({color:0x8b5e3c,flatShading:true}));
+  trunk.position.z=10*Z;trunk.castShadow=true;g.add(trunk);
+  const greens=[0x4caf50,0x66bb6a,0x388e3c];
+  const h=TRH[~~(Math.random()*3)]*Z;
+  const crown=new THREE.Mesh(new THREE.BoxGeometry(32*Z,32*Z,h),
+    new THREE.MeshPhongMaterial({color:greens[~~(Math.random()*3)],flatShading:true,shininess:10}));
+  crown.position.z=h/2+20;crown.castShadow=true;g.add(crown);
+  const topCols=[0xffcc00,0xff44aa,0xff8c00,0x00ccff];
+  const tip=new THREE.Mesh(new THREE.BoxGeometry(10*Z,10*Z,10*Z),
+    new THREE.MeshPhongMaterial({color:topCols[~~(Math.random()*topCols.length)],emissive:0xffcc00,emissiveIntensity:.35,flatShading:true}));
+  tip.position.z=h+24;g.add(tip);
+  return g;
+}
+
+function mkRoad(){
+  const g=new THREE.Group();
+  const road=new THREE.Mesh(new THREE.BoxGeometry(BW*Z*3,PW*Z,4),
+    new THREE.MeshPhongMaterial({color:0x6e6e7e,flatShading:true,shininess:20}));
+  road.receiveShadow=true;g.add(road);
+  const dashMat=new THREE.MeshPhongMaterial({color:0xffcc00,emissive:0xffaa00,emissiveIntensity:.2,flatShading:true});
+  for(let i=1;i<COLS;i++){
+    const d=new THREE.Mesh(new THREE.BoxGeometry(14*Z,3*Z,5),dashMat);
+    d.position.x=i*PW*Z-(BW*Z)/2;g.add(d);
+  }
+  const edgeMat=new THREE.MeshPhongMaterial({color:0xffffff,flatShading:true});
+  [-1,1].forEach(s=>{
+    const e=new THREE.Mesh(new THREE.BoxGeometry(BW*Z*3,4,5.5),edgeMat);
+    e.position.y=s*(PW*Z*.5-1);g.add(e);
+  });
+  return g;
+}
+
+function mkGrass(){
+  const g=new THREE.Group();
+  const base=new THREE.Mesh(new THREE.BoxGeometry(BW*Z*3,PW*Z,4*Z),
+    new THREE.MeshPhongMaterial({color:0x7dc742,flatShading:true,shininess:5}));
+  base.receiveShadow=true;g.add(base);
+  const stripeMat=new THREE.MeshPhongMaterial({color:0x6ab835,flatShading:true});
+  for(let i=0;i<COLS;i+=2){
+    const s=new THREE.Mesh(new THREE.BoxGeometry(PW*Z,PW*Z,4.5*Z),stripeMat);
+    s.position.x=i*PW*Z-(BW*Z)/2+PW*Z/2;g.add(s);
+  }
+  return g;
+}
+
+/* ── FIX 2: CHICKEN — beak on forward-facing side (negative Y = toward player) ── */
+function mkChicken(){
+  const g=new THREE.Group();
+
+  // Body — bright yellow
+  const body=new THREE.Mesh(
+    new THREE.BoxGeometry(CHSZ*Z,CHSZ*Z,20*Z),
+    new THREE.MeshPhongMaterial({color:0xffdd00,flatShading:true,shininess:60,emissive:0xffaa00,emissiveIntensity:.15})
+  );
+  body.position.z=10*Z;body.castShadow=true;g.add(body);
+
+  // Red crest — ON TOP (positive Z offset from body top)
+  const crest=new THREE.Mesh(
+    new THREE.BoxGeometry(5*Z,4*Z,7*Z),
+    new THREE.MeshPhongMaterial({color:0xff3333,emissive:0xff1111,emissiveIntensity:.25,flatShading:true})
+  );
+  crest.position.set(0,0,23*Z);g.add(crest);
+
+  // Orange beak — pointing FORWARD (negative Y = faces the camera / forward direction)
+  const beak=new THREE.Mesh(
+    new THREE.BoxGeometry(5*Z,6*Z,4*Z),
+    new THREE.MeshPhongMaterial({color:0xff8800,flatShading:true})
+  );
+  beak.position.set(0,-11*Z,11*Z); // Y negative = forward in game world
+  g.add(beak);
+
+  // Two tiny white eyes
+  const eyeMat=new THREE.MeshPhongMaterial({color:0xffffff,flatShading:true});
+  [-3,3].forEach(xo=>{
+    const eye=new THREE.Mesh(new THREE.BoxGeometry(2.5*Z,2*Z,2.5*Z),eyeMat);
+    eye.position.set(xo*Z,-8*Z,18*Z);g.add(eye);
+    // Black pupils
+    const pupil=new THREE.Mesh(new THREE.BoxGeometry(1.5*Z,2.2*Z,1.5*Z),
+      new THREE.MeshPhongMaterial({color:0x111111,flatShading:true}));
+    pupil.position.set(xo*Z,-8.5*Z,19*Z);g.add(pupil);
+  });
+  g.rotation.z = Math.PI;
+
+
+
+  return g;
+}
+
+function buildLane(index){
+  const TYPES=['car','truck','forest'];
+  const type=index<=0?'field':TYPES[~~(Math.random()*TYPES.length)];
+  const lane={index,type,vehicles:[],occupiedPositions:new Set(),speed:0,direction:true};
+  if(type==='field'||type==='forest'){
+    lane.mesh=mkGrass();
+    if(type==='forest'){
+      for(let k=0;k<4;k++){
+        let pos;do{pos=~~(Math.random()*COLS);}while(lane.occupiedPositions.has(pos));
+        lane.occupiedPositions.add(pos);
+        const t=mkTree();t.position.x=(pos*PW+PW/2)*Z-(BW*Z)/2;lane.mesh.add(t);
+      }
+    }
+  }else if(type==='car'){
+    lane.mesh=mkRoad();lane.direction=Math.random()>=.5;lane.speed=SPDS[~~(Math.random()*SPDS.length)];
+    const occ=new Set();
+    lane.vehicles=[0,1,2].map(()=>{
+      let p;do{p=~~(Math.random()*(COLS/2));}while(occ.has(p));occ.add(p);
+      const v=mkCar();v.position.x=(p*PW*2+PW/2)*Z-(BW*Z)/2;
+      if(!lane.direction)v.rotation.z=Math.PI;lane.mesh.add(v);return v;
+    });
+  }else{
+    lane.mesh=mkRoad();lane.direction=Math.random()>=.5;lane.speed=SPDS[~~(Math.random()*SPDS.length)];
+    const occ=new Set();
+    lane.vehicles=[0,1].map(()=>{
+      let p;do{p=~~(Math.random()*(COLS/3));}while(occ.has(p));occ.add(p);
+      const v=mkTruck();v.position.x=(p*PW*3+PW/2)*Z-(BW*Z)/2;
+      if(!lane.direction)v.rotation.z=Math.PI;lane.mesh.add(v);return v;
+    });
+  }
+  lane.mesh.position.y=index*PW*Z;
+  scene.add(lane.mesh);
+  return lane;
+}
+
+function initScene(){
+  const el=document.getElementById('ctv');
+  const W=el.clientWidth,H=el.clientHeight;
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x87ceeb);
+  scene.fog=new THREE.FogExp2(0xc8e8f8,.0004);
+  camera=new THREE.OrthographicCamera(W/-2,W/2,H/2,H/-2,.1,10000);
+  camera.rotation.x=50*Math.PI/180;
+  camera.rotation.y=20*Math.PI/180;
+  camera.rotation.z=10*Math.PI/180;
+  initCamY=-Math.tan(camera.rotation.x)*DIST;
+  initCamX=Math.tan(camera.rotation.y)*Math.sqrt(DIST**2+initCamY**2);
+  camera.position.set(initCamX,initCamY,DIST);
+  scene.add(new THREE.HemisphereLight(0x87ceeb,0x4caf50,.9));
+  sunLight=new THREE.DirectionalLight(0xfff5e0,1.1);
+  sunLight.position.set(-100,-100,300);
+  sunLight.castShadow=true;
+  sunLight.shadow.mapSize.width=2048;sunLight.shadow.mapSize.height=2048;
+  const sd=500;
+  sunLight.shadow.camera.left=-sd;sunLight.shadow.camera.right=sd;
+  sunLight.shadow.camera.top=sd;sunLight.shadow.camera.bottom=-sd;
+  scene.add(sunLight);
+  fillLight=new THREE.DirectionalLight(0xb0e0ff,.4);
+  fillLight.position.set(180,200,80);scene.add(fillLight);
+  buildTextures();
+  chicken=mkChicken();scene.add(chicken);
+  lanes=[-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9]
+    .map(i=>buildLane(i)).filter(l=>l.index>=0);
+  renderer=new THREE.WebGLRenderer({antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.shadowMap.enabled=true;
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.setSize(W,H);
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.15;
+  const cv=renderer.domElement;
+  cv.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;border-radius:18px';
+  el.insertBefore(cv,el.firstChild);
+}
+
+function resetGame(){
+  currentLane=0;currentColumn=Math.floor(COLS/2);
+  moves=[];stepStart=null;startMoving=false;prevTs=null;score=0;combo=0;
+  chicken.position.set(0,0,0);
+  camera.position.set(initCamX,initCamY,DIST);
+  sunLight.position.set(-100,-100,300);
+  lanes.forEach(l=>scene.remove(l.mesh));
+  lanes=[-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9]
+    .map(i=>buildLane(i)).filter(l=>l.index>=0);
+}
+
+let achTimer=null;
+function showAch(a){
+  if(achTimer)clearTimeout(achTimer);
+  document.getElementById('ctv-apname').textContent=a.icon+' '+a.name;
+  document.getElementById('ctv-apdesc').textContent=a.desc;
+  achEl.style.display='block';achEl.classList.remove('ach-in');
+  void achEl.offsetWidth;achEl.classList.add('ach-in');
+  achTimer=setTimeout(()=>achEl.style.display='none',3500);
+}
+function checkAchs(s){ACHS.forEach(a=>{if(s>=a.req&&!unlocked.includes(a.id)){unlocked.push(a.id);showAch(a);}});}
+
+let comboTimer=null;
+function showCombo(c){
+  if(c<3)return;
+  const txt=c>=7?'💥 LEGENDARY! ×'+c:c>=5?'🌟 AMAZING! ×'+c:c>=4?'⚡ GREAT! ×'+c:'🔥 NICE! ×'+c;
+  comboSp.textContent=txt;
+  comboEl.style.display='block';comboEl.classList.remove('combo-anim');
+  void comboEl.offsetWidth;comboEl.classList.add('combo-anim');
+  if(comboTimer)clearTimeout(comboTimer);
+  comboTimer=setTimeout(()=>comboEl.style.display='none',700);
+}
+
+function doMove(dir){
+  if(gstate!=='playing')return;
+  const fin=moves.reduce((p,m)=>({
+    lane:p.lane+(m==='forward'?1:m==='backward'?-1:0),
+    col:p.col+(m==='right'?1:m==='left'?-1:0),
+  }),{lane:currentLane,col:currentColumn});
+  if(dir==='forward'){
+    const nxt=lanes[fin.lane+1];
+    if(nxt&&nxt.type==='forest'&&nxt.occupiedPositions.has(fin.col))return;
+    if(!stepStart)startMoving=true;
+    lanes.push(buildLane(lanes.length));
+  }else if(dir==='backward'){
+    if(fin.lane===0)return;
+    const prv=lanes[fin.lane-1];
+    if(prv&&prv.type==='forest'&&prv.occupiedPositions.has(fin.col))return;
+    if(!stepStart)startMoving=true;
+  }else if(dir==='left'){
+    if(fin.col===0)return;
+    const cur=lanes[fin.lane];
+    if(cur&&cur.type==='forest'&&cur.occupiedPositions.has(fin.col-1))return;
+    if(!stepStart)startMoving=true;
+  }else{
+    if(fin.col===COLS-1)return;
+    const cur=lanes[fin.lane];
+    if(cur&&cur.type==='forest'&&cur.occupiedPositions.has(fin.col+1))return;
+    if(!stepStart)startMoving=true;
+  }
+  moves.push(dir);
+}
+
+function triggerDeath(){
+  gstate='gameover';
+  flashEl.style.display='block';setTimeout(()=>flashEl.style.display='none',440);
+  root.classList.add('ctv-shk');setTimeout(()=>root.classList.remove('ctv-shk'),380);
+  if(score>bestScore)bestScore=score;
+  document.getElementById('ctv-goscore').textContent=score;
+  const newBest=score>=bestScore&&score>0;
+  const gb=document.getElementById('ctv-gobest');
+  gb.textContent=newBest?'🏆 NEW BEST! 🎉':'🏆 BEST: '+bestScore;
+  gb.className='ctv-pbest'+(newBest?' ctv-newbest':'');
+  document.getElementById('ctv-goach').innerHTML=
+    ACHS.filter(a=>unlocked.includes(a.id)).map(a=>`<div class="ctv-ac">${a.icon} ${a.name}</div>`).join('');
+  goOv.style.display='flex';
+  bsDisp.textContent=bestScore>0?'🏆 BEST: '+bestScore:'';
+}
+
+function loop(ts){
+  rafId=requestAnimationFrame(loop);
+  if(gstate==='paused'||!renderer)return;
+  if(!prevTs)prevTs=ts;
+  const delta=ts-prevTs;prevTs=ts;
+  const diff=1+Math.min(score*.015,1.5);
+  const lEdge=-(BW*Z)/2-PW*2*Z,rEdge=(BW*Z)/2+PW*2*Z;
+  lanes.forEach(lane=>{
+    if(lane.type!=='car'&&lane.type!=='truck')return;
+    lane.vehicles.forEach(v=>{
+      if(lane.direction){v.position.x=v.position.x<lEdge?rEdge:(v.position.x-=(lane.speed*diff/16)*delta);}
+      else{v.position.x=v.position.x>rEdge?lEdge:(v.position.x+=(lane.speed*diff/16)*delta);}
+    });
+  });
+  if(startMoving){stepStart=ts;startMoving=false;}
+  if(stepStart){
+    const md=ts-stepStart;
+    const dd=Math.min(md/STEP,1)*PW*Z;
+    const jd=Math.sin(Math.min(md/STEP,1)*Math.PI)*10*Z;
+    switch(moves[0]){
+      case'forward':{const py=currentLane*PW*Z+dd;camera.position.y=initCamY+py;sunLight.position.y=-100+py;chicken.position.y=py;chicken.position.z=jd;break;}
+      case'backward':{const py=currentLane*PW*Z-dd;camera.position.y=initCamY+py;sunLight.position.y=-100+py;chicken.position.y=py;chicken.position.z=jd;break;}
+      case'left':{const px=(currentColumn*PW+PW/2)*Z-(BW*Z)/2-dd;camera.position.x=initCamX+px;sunLight.position.x=-100+px;chicken.position.x=px;chicken.position.z=jd;break;}
+      case'right':{const px=(currentColumn*PW+PW/2)*Z-(BW*Z)/2+dd;camera.position.x=initCamX+px;sunLight.position.x=-100+px;chicken.position.x=px;chicken.position.z=jd;break;}
+    }
+    if(md>STEP){
+      switch(moves[0]){
+        case'forward':currentLane++;score=currentLane;scEl.textContent=score;combo++;
+          streakEl.textContent=combo>=2?'🔥×'+combo:'';streakEl.style.display=combo>=2?'block':'none';
+          showCombo(combo);checkAchs(score);break;
+        case'backward':currentLane=Math.max(0,currentLane-1);score=currentLane;scEl.textContent=score;combo=0;streakEl.style.display='none';break;
+        case'left':currentColumn--;break;
+        case'right':currentColumn++;break;
+      }
+      moves.shift();stepStart=moves.length===0?null:ts;
+    }
+  }
+  const lane=lanes[currentLane];
+  if(lane&&(lane.type==='car'||lane.type==='truck')){
+    const cMin=chicken.position.x-(CHSZ*Z)/2,cMax=chicken.position.x+(CHSZ*Z)/2;
+    const vl=lane.type==='car'?60:105;
+    for(const v of lane.vehicles){
+      if(cMax>v.position.x-(vl*Z)/2&&cMin<v.position.x+(vl*Z)/2&&gstate==='playing'){
+        triggerDeath();return;
+      }
+    }
+  }
+  renderer.render(scene,camera);
+}
+
+function startGame(){
+  startEl.style.display='none';goOv.style.display='none';pauseOv.style.display='none';
+  hudEl.style.display='block';pbtnEl.style.display='block';
+  if(/Mobi|Android/i.test(navigator.userAgent)||window.innerWidth<640)ctrlsEl.style.display='block';
+  scEl.textContent='0';bstEl.textContent='🏆 BEST '+bestScore;streakEl.style.display='none';
+  if(!renderer){initScene();}else{resetGame();}
+  gstate='playing';
+  if(rafId)cancelAnimationFrame(rafId);
+  rafId=requestAnimationFrame(loop);
+}
+function goMenu(){
+  gstate='start';goOv.style.display='none';pauseOv.style.display='none';
+  hudEl.style.display='none';pbtnEl.style.display='none';ctrlsEl.style.display='none';
+  startEl.style.display='flex';
+  bsDisp.textContent=bestScore>0?'🏆 BEST: '+bestScore:'';
+  if(rafId)cancelAnimationFrame(rafId);
+}
+
+document.getElementById('ctv-sbtn').onclick=startGame;
+document.getElementById('ctv-resume-btn').onclick=()=>{gstate='playing';pauseOv.style.display='none';pbtnEl.textContent='⏸ PAUSE';};
+document.getElementById('ctv-restart-p').onclick=startGame;
+document.getElementById('ctv-menu-p').onclick=goMenu;
+document.getElementById('ctv-replay-btn').onclick=startGame;
+document.getElementById('ctv-menu-go').onclick=goMenu;
+document.getElementById('ctv-pbtn').onclick=()=>{
+  if(gstate==='playing'){gstate='paused';document.getElementById('ctv-pscore').textContent=score;pauseOv.style.display='flex';pbtnEl.textContent='▶ GO!';}
+  else if(gstate==='paused'){gstate='playing';pauseOv.style.display='none';pbtnEl.textContent='⏸ PAUSE';}
+};
+['cb-up','cb-dn','cb-lt','cb-rt'].forEach((id,i)=>{
+  const dirs=['forward','backward','left','right'];
+  document.getElementById(id).addEventListener('pointerdown',e=>{e.preventDefault();doMove(dirs[i]);});
+});
+window.addEventListener('keydown',e=>{
+  const m={ArrowUp:'forward',w:'forward',ArrowDown:'backward',s:'backward',ArrowLeft:'left',a:'left',ArrowRight:'right',d:'right'};
+  if(m[e.key]){e.preventDefault();doMove(m[e.key]);}
+  if((e.key==='Escape'||e.key==='p')&&gstate==='playing'){gstate='paused';document.getElementById('ctv-pscore').textContent=score;pauseOv.style.display='flex';pbtnEl.textContent='▶ GO!';}
+  else if((e.key==='Escape'||e.key==='p')&&gstate==='paused'){gstate='playing';pauseOv.style.display='none';pbtnEl.textContent='⏸ PAUSE';}
+});
+window.addEventListener('resize',()=>{
+  if(!renderer)return;
+  const W=root.clientWidth,H=root.clientHeight;
+  camera.left=W/-2;camera.right=W/2;camera.top=H/2;camera.bottom=H/-2;
+  camera.updateProjectionMatrix();renderer.setSize(W,H);
+});
+
+(function(){
+  const p=document.getElementById('ctv-parts');
+  const cols=['#ffcc00','#ff5c5c','#00cc88','#00b4ff','#dd44ff','#ff44aa','#ffaa00'];
+  for(let i=0;i<35;i++){
+    const d=document.createElement('div');d.className='ctv-p';
+    d.style.left=Math.random()*100+'%';
+    d.style.animationDuration=(5+Math.random()*8)+'s';
+    d.style.animationDelay=(Math.random()*7)+'s';
+    const col=cols[~~(Math.random()*cols.length)];
+    const sz=(3+Math.random()*5)+'px';
+    d.style.width=sz;d.style.height=sz;
+    d.style.background=col;d.style.boxShadow=`0 0 5px ${col}`;
+    p.appendChild(d);
+  }
+})();
+})();
+</script>
