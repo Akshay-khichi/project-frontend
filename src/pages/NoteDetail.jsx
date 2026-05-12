@@ -18,7 +18,6 @@ export default function NoteDetail() {
   const [viewerOpen, setViewerOpen] = useState(false)
   const [bookmarked, setBookmarked] = useState(false)
 
-  // ── Fetch Note Metadata ────────────────────────
   const { data: note, isLoading, isError } = useQuery({
     queryKey: ['note', id],
     queryFn: () => notesAPI.get(id).then((r) => {
@@ -28,18 +27,22 @@ export default function NoteDetail() {
     staleTime: 5 * 60 * 1000,
   })
 
-  const access = note ? hasAccess(note.unitNumber) : false
+  // CHANGE 1: Remove unitNumber parameter - all content requires premium
+  const access = note ? hasAccess() : false
 
-  // ── Fetch Signed URL (on demand) ───────────────
   const { mutate: fetchSignedUrl, isPending: fetchingUrl } = useMutation({
     mutationFn: () => notesAPI.getSignedUrl(id).then((r) => r.data.url),
     onSuccess: (url) => {
       setSignedUrl(url)
       setViewerOpen(true)
     },
+    onError: (err) => {
+      if (err?.response?.status === 403) {
+        // Handle premium required
+      }
+    }
   })
 
-  // ── Bookmark Toggle ────────────────────────────
   const { mutate: toggleBookmark } = useMutation({
     mutationFn: () =>
       bookmarked ? bookmarksAPI.remove(id) : bookmarksAPI.add(id),
@@ -71,18 +74,17 @@ export default function NoteDetail() {
     )
   }
 
-  const isPremiumContent = note.unitNumber > 2
+  // CHANGE 2: All content is premium - no conditional logic
+  const isPremiumContent = true
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-      {/* ── Back ────────────────────────────────── */}
       <button onClick={() => navigate(-1)}
         className="flex items-center gap-2 text-sm text-ice-400 hover:text-ice-100 transition-colors mb-6 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
         Back to Notes
       </button>
 
-      {/* ── Metadata Card ───────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -113,10 +115,8 @@ export default function NoteDetail() {
           </div>
 
           <div className="flex items-center gap-2">
-            {isPremiumContent
-              ? <span className="badge-premium"><Lock className="w-3 h-3" />Premium</span>
-              : <span className="badge-free">Free</span>
-            }
+            {/* CHANGE 3: Always show Premium badge */}
+            <span className="badge-premium"><Lock className="w-3 h-3" />Premium</span>
             {user && (
               <button
                 onClick={() => toggleBookmark()}
@@ -141,7 +141,6 @@ export default function NoteDetail() {
           </div>
         </div>
 
-        {/* Stats Row */}
         <div className="flex items-center gap-4 mt-4 pt-4"
              style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
           <span className="text-xs text-ice-600 font-mono">{note.downloadCount ?? 0} views</span>
@@ -154,10 +153,8 @@ export default function NoteDetail() {
         </div>
       </motion.div>
 
-      {/* ── Viewer Section ──────────────────────── */}
       {!access ? (
-        <PremiumLock locked variant="page" reason="Unit 3+ notes require Premium access">
-          {/* Ghost content for blur background */}
+        <PremiumLock locked variant="page" reason="Premium subscription required to access this content">
           <div className="h-96 rounded-2xl flex items-center justify-center"
                style={{ background: '#111120' }}>
             <BookOpen className="w-16 h-16 text-ice-700" />

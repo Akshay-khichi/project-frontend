@@ -217,6 +217,14 @@ export default function App() {
   </ProtectedRoute>
 } />
 
+<Route path="/dashboard" element={
+  <ProtectedRoute>
+    <div style={{ paddingTop: '64px' }}>
+      <PageWrapper><Dashboard /></PageWrapper>
+    </div>
+  </ProtectedRoute>
+} />
+
             {/* ── Admin (role-gated) ───────────────── */}
             <Route path="/admin" element={
               <AdminRoute>

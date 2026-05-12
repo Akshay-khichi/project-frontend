@@ -2,6 +2,9 @@ import { lazy, Suspense } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { Link } from 'react-router-dom'
 
+//added
+import { ChevronRight } from 'lucide-react'
+
 
 
 import {
@@ -12,12 +15,42 @@ import {
 import FormulaCards from '@/components/common/FormulaCards'
 
 const FEATURES = [
-  { icon: BookOpen,     title: 'Organised Notes',     desc: 'Browse by Branch → Semester → Subject → Unit. Find exactly what you need.' },
-  { icon: FileQuestion, title: 'Previous Year Papers', desc: 'Year-wise PYQs for every subject. Analyse patterns, ace your exams.' },
-  { icon: Search,       title: 'Instant Search',       desc: 'Find any note or PYQ in seconds with our lightning-fast search engine.' },
-  { icon: Shield,       title: 'Secure Viewing',       desc: 'Watermarked, signed-URL delivery. Your content stays protected.' },
-  { icon: Zap,          title: 'Always Updated',       desc: 'Admins upload fresh content every semester. Never study from old PDFs again.' },
-  { icon: Lock,         title: 'Role-Based Access',    desc: 'Unit 1 & 2 free forever. Premium unlocks all notes, PYQs, and more.' },
+  { 
+    icon: BookOpen, 
+    title: 'Organised Notes', 
+    desc: 'Browse by Branch → Semester → Subject → Unit. Find exactly what you need with our intuitive hierarchy.',
+    image: 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=800&q=80'
+  },
+  { 
+    icon: FileQuestion, 
+    title: 'Previous Year Papers', 
+    desc: 'Year-wise PYQs for every subject. Analyse patterns, understand trends, and ace your exams with confidence.',
+    image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&q=80'
+  },
+  { 
+    icon: Search, 
+    title: 'Instant Search', 
+    desc: 'Find any note or PYQ in seconds with our lightning-fast search engine. No more scrolling through endless folders.',
+    image: 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=800&q=80'
+  },
+  { 
+    icon: Shield, 
+    title: 'Secure Viewing', 
+    desc: 'Watermarked, signed-URL delivery. Your content stays protected with enterprise-grade security.',
+    image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&q=80'
+  },
+  { 
+    icon: Zap, 
+    title: 'Always Updated', 
+    desc: 'Admins upload fresh content every semester. Never study from old PDFs again. Stay current, stay ahead.',
+    image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'
+  },
+  { 
+    icon: Lock, 
+    title: 'Role-Based Access', 
+    desc: 'Unit 1 & 2 free forever. Premium unlocks all notes, PYQs, and exclusive features for serious learners.',
+    image: 'https://images.unsplash.com/photo-1555432384-4ec7ce8c79fe?w=800&q=80'
+  },
 ]
 
 const FREE_FEATURES  = ['Unit 1 Notes', 'Unit 2 Notes', 'Basic Search', 'Account Dashboard']
@@ -173,7 +206,7 @@ export default function Landing() {
       </section>
 
       {/* ── FEATURES ────────────────────────────── */}
-      <section className="py-28 px-4 sm:px-6 max-w-7xl mx-auto">
+      {/* <section className="py-28 px-4 sm:px-6 max-w-7xl mx-auto">
         <FadeUp className="text-center mb-16">
           <p className="section-label mb-4">Why EduVault</p>
           <h2 className="font-display font-800 text-4xl sm:text-5xl text-ice-100">
@@ -198,7 +231,60 @@ export default function Landing() {
             </FadeUp>
           ))}
         </div>
-      </section>
+      </section> */}
+
+
+{/* ── FUTURISTIC BENTO GRID ────────────────────────────── */}
+
+<section className="py-28 px-4 sm:px-6 max-w-7xl mx-auto">
+  <FadeUp className="text-center mb-16">
+    <p className="section-label mb-4">Why EduVault</p>
+    <h2 className="font-display font-800 text-4xl sm:text-5xl text-ice-100">
+      Everything you need.<br />Nothing you don't.
+    </h2>
+  </FadeUp>
+
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    {FEATURES.map(({ icon: Icon, title, desc, image }, i) => (
+      <FadeUp key={title} delay={i * 0.07}>
+        <motion.div 
+          className="group relative h-80 rounded-3xl overflow-hidden cursor-pointer bg-gradient-to-br from-slate-900/80 to-slate-950/80 backdrop-blur-xl border border-white/10"
+          whileHover={{ y: -8 }}
+          transition={{ duration: 0.3 }}
+        >
+          {/* Background Image with fallback gradient */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-20 transition-opacity duration-500"
+            style={{ backgroundImage: `url(${image})` }}
+          />
+          
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-ink-950 via-ink-950/80 to-transparent" />
+
+          {/* Icon Badge */}
+          <div className="absolute top-5 left-5 w-12 h-12 rounded-2xl bg-sky-500/20 backdrop-blur-md border border-sky-500/30 flex items-center justify-center">
+            <Icon className="w-6 h-6 text-sky-400" />
+          </div>
+
+          {/* Content - Always Visible */}
+          <div className="absolute bottom-0 left-0 right-0 p-6">
+            <h3 className="font-display font-700 text-2xl text-white mb-3">{title}</h3>
+            <p className="text-ice-300 text-sm leading-relaxed mb-4 opacity-90 group-hover:opacity-100 transition-opacity">
+              {desc}
+            </p>
+            <div className="flex items-center gap-2 text-sky-400 text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <span>Learn More</span>
+              <ChevronRight className="w-4 h-4" />
+            </div>
+          </div>
+
+          {/* Decorative Glow */}
+          <div className="absolute top-5 right-5 w-20 h-20 bg-sky-500/10 rounded-full blur-2xl" />
+        </motion.div>
+      </FadeUp>
+    ))}
+  </div>
+</section>
 
 
       {/* ── FORMULA CARDS ───────────────── */}
@@ -341,14 +427,10 @@ export default function Landing() {
               Ready to ace your exams?
             </h2>
             <p className="text-ice-400 mb-10">
-              Join 10,000+ students who trust EduVault for exam preparation.
+              Join students who trust EduVault for exam preparation.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/login" className="btn-primary text-base px-8 py-4 rounded-2xl">
-                Start for Free
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link to="/notes" className="btn-ghost text-base px-8 py-4 rounded-2xl">
+              <Link to="/notes" className="btn-primary text-base px-8 py-4 rounded-2xl">
                 Browse Notes
               </Link>
             </div>
