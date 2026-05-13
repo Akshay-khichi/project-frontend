@@ -1,11 +1,14 @@
 import axios from 'axios'
 import { useStore } from '@/store/useStore'
 
-const BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'
+// Ensure BASE_URL is absolute (not relative path)
+const BASE_URL = import.meta.env.VITE_API_URL 
+  ? import.meta.env.VITE_API_URL 
+  : 'http://localhost:5000/api/v1'
 
 export const api = axios.create({
   baseURL: BASE_URL,
-  withCredentials: true, // for HttpOnly refresh token cookie
+  withCredentials: true, // CRITICAL: Send cookies with every request
   headers: { 'Content-Type': 'application/json' },
 })
 
@@ -59,12 +62,12 @@ api.interceptors.response.use(
       _refreshing = true
 
       try {
-        const { data } = await axios.post(
-          `${BASE_URL}/auth/refresh`,
-          {},
-          { withCredentials: true }
-        )
-        const newToken = data.accessToken
+        // Use the same api instance to maintain interceptors and withCredentials
+        const { data } = await api.post('/auth/refresh', {})
+        
+        const newToken = data.accessToken || data.data?.accessToken
+        if (!newToken) throw new Error('No access token in refresh response')
+        
         setAccessToken(newToken)
         processQueue(null, newToken)
         originalRequest.headers.Authorization = `Bearer ${newToken}`
@@ -72,7 +75,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null)
         clearAccessToken()
-        useStore.getState().logout()
+        useStore.getState().logout?.()
         window.location.href = '/login'
         return Promise.reject(refreshError)
       } finally {

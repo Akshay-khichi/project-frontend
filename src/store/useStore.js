@@ -6,23 +6,32 @@ export const useStore = create(
     (set, get) => ({
       // ── Auth State ──────────────────────────────────
 
-      // user:                null,
-      // token:               null,
-      // subscriptionStatus:  null,  // 'active' | 'expired' | 'none'
-      // subscriptionExpiry:  null,  // ISO date string
-      // subscriptionPlan:    null,  // 'monthly' | 'yearly'
+      user: null,
+      token: null,
+      subscriptionStatus: null,  // 'active' | 'expired' | 'none'
+      subscriptionExpiry: null,  // ISO date string
+      subscriptionPlan: null,    // 'monthly' | 'yearly'
 
-      //TESTING 
-      user: {
-      email: "test@student.com",
-       role: "student"
-     },
+      // ── TESTING MODE (Uncomment to simulate premium user) ─────────────
+      // For testing premium features without actual payment:
+      // 1. Comment out the default null values above
+      // 2. Uncomment the test values below
+      // 3. Refresh the page
 
-    token: "test-token",
+      /* === TEST USER (Uncomment for testing) === */
+      // user: {
+      //   email: "test@student.com",
+      //   name: "Test Student",
+      //   role: "student",
+      //   picture: "https://ui-avatars.com/api/?name=Test+Student&background=38BDF8&color=0f172a"
+      // },
+      // token: "test-token-12345",
 
-      subscriptionStatus: "active",
-         subscriptionExpiry: "2099-12-31T00:00:00Z",
-          subscriptionPlan: "monthly",
+      /* === TEST PREMIUM SUBSCRIPTION (Uncomment for testing) === */
+      // subscriptionStatus: "active",
+      // subscriptionExpiry: "2099-12-31T00:00:00Z",
+      // subscriptionPlan: "yearly",
+      // ──────────────────────────────────────────────────────────────────
 
       // ── Actions ─────────────────────────────────────
       setUser: (user) => set({ user }),
@@ -34,49 +43,64 @@ export const useStore = create(
 
       logout: () =>
         set({
-          user:               null,
-          token:              null,
+          user: null,
+          token: null,
           subscriptionStatus: null,
           subscriptionExpiry: null,
-          subscriptionPlan:   null,
+          subscriptionPlan: null,
         }),
 
       // ── Access Control Helpers ───────────────────────
       /**
        * Returns true if the user has an active premium subscription.
+       * 
+       * TESTING: To force premium mode for testing:
+       *   return true  // Force premium
+       *   return false // Force non-premium
        */
       isPremiumUser: () => {
         const { subscriptionStatus, subscriptionExpiry } = get()
+        
+        // TESTING: Uncomment one of these lines to override real logic
+        // return true   // Force premium for testing
+        // return false  // Force non-premium for testing
+        
+        // Production logic:
         if (subscriptionStatus !== 'active') return false
         if (!subscriptionExpiry) return false
         return new Date(subscriptionExpiry) > new Date()
       },
 
       /**
-       * Returns true if the user can access content at the given unit number.
-       * Unit 1 & 2 are free. Unit 3+ require premium.
-       * Pass unitNumber = null / undefined for PYQs (always premium).
-       *
-       * @param {number|null} unitNumber - The unit number (null for PYQs)
+       * Returns true if the user can access content.
+       * 
+       * ALL content now requires premium subscription.
+       * 
+       * TESTING: To test non-premium state:
+       *   return false  // Block all access for testing
+       * 
+       * @param {number|null} unitNumber - No longer used, kept for API compatibility
        * @returns {boolean}
        */
       hasAccess: (unitNumber) => {
         const { isPremiumUser } = get()
-        // PYQs — always premium
-        if (unitNumber === null || unitNumber === undefined) return isPremiumUser()
-        // Notes Unit 1 & 2 — free
-        if (unitNumber <= 2) return true
-        // Unit 3+ — premium required
+        
+        // TESTING: Force non-premium for testing locked states
+        // return false
+        
+        // Production: ALL content requires premium
         return isPremiumUser()
       },
 
       /**
        * Returns whether content requires premium based on unit number.
        * Does NOT check if user has access — use hasAccess() for that.
+       * 
+       * Note: Currently ALL content is premium regardless of unit number.
        */
       isContentPremium: (unitNumber) => {
-        if (unitNumber === null || unitNumber === undefined) return true
-        return unitNumber >= 3
+        // All content is premium - unit number check removed
+        return true
       },
     }),
     {
@@ -84,10 +108,10 @@ export const useStore = create(
       storage: createJSONStorage(() => localStorage),
       // Only persist these keys — token stored in memory for security
       partialize: (state) => ({
-        user:               state.user,
+        user: state.user,
         subscriptionStatus: state.subscriptionStatus,
         subscriptionExpiry: state.subscriptionExpiry,
-        subscriptionPlan:   state.subscriptionPlan,
+        subscriptionPlan: state.subscriptionPlan,
       }),
     }
   )

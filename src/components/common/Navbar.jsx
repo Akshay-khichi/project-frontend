@@ -6,7 +6,7 @@ import { useStore } from '@/store/useStore'
 import { authAPI } from '@/api/axios'
 
 const NAV_ITEMS = [
-  { to: '/',     label: 'Home',     icon: BookOpen },        // added
+  { to: '/',     label: 'Home',     icon: BookOpen },
   { to: '/notes',     label: 'Notes',     icon: BookOpen },
   { to: '/pyqs',      label: 'PYQs',      icon: FileQuestion },
   { to: '/premium',   label: 'Premium',   icon: Sparkles,  highlight: true },
@@ -28,6 +28,13 @@ export default function Navbar() {
 
   useEffect(() => { setOpen(false) }, [location.pathname])
 
+  // Debug: Check if user object has picture URL
+  useEffect(() => {
+    if (user) {
+      console.log('Navbar User Data:', user)
+    }
+  }, [user])
+
   const handleLogout = async () => {
     try { await authAPI.logout() } catch (_) { /* ignore */ }
     logout()
@@ -35,6 +42,14 @@ export default function Navbar() {
   }
 
   const premium = isPremiumUser()
+
+  // Fallback avatar if Google CDN fails or user has no avatar
+  const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=0D8ABC&color=fff&size=96`
+
+  // Helper to get the best available avatar URL
+  const getAvatarUrl = () => {
+    return user?.picture || user?.avatar || user?.photoURL || user?.photos?.[0]?.value || null
+  }
 
   return (
     <>
@@ -53,22 +68,26 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all group-hover:scale-110"
-                   style={{ background: 'linear-gradient(135deg, #F5A623, #E08A00)' }}>
+              <div 
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all group-hover:scale-110"
+                style={{ 
+                  background: 'linear-gradient(135deg, #38BDF8, #0284C7)',
+                }}
+              >
                 <BookOpen className="w-4 h-4 text-ink-950" />
               </div>
               <span className="font-display font-800 text-lg tracking-tight">
-                Edu<span style={{ color: '#F5A623' }}>Vault</span>
+                Edu<span style={{ color: '#38BDF8' }}>Vault</span>
               </span>
             </Link>
 
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-1">
               {NAV_ITEMS.map(({ to, label, icon: Icon, highlight }) => {
-               const active =
-  to === '/'
-    ? location.pathname === '/'
-    : location.pathname.startsWith(to)
+                const active =
+                  to === '/'
+                    ? location.pathname === '/'
+                    : location.pathname.startsWith(to)
                 return (
                   <Link
                     key={to}
@@ -97,19 +116,30 @@ export default function Navbar() {
                     className="flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all hover:bg-white/5"
                     style={{ border: '1px solid rgba(255,255,255,0.06)' }}
                   >
-                    {/* Avatar */}
+                    {/* Avatar with fallback handler */}
                     <div className="w-7 h-7 rounded-lg overflow-hidden flex-shrink-0"
-                         style={{ background: 'linear-gradient(135deg, #F5A623, #E08A00)' }}>
-                      {user.avatar ? (
-                        <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                         style={{ background: 'linear-gradient(135deg, #38BDF8, #0284C7)' }}>
+                      {getAvatarUrl() ? (
+                        <img 
+                          src={getAvatarUrl()} 
+                          alt={user?.name || 'User'} 
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={(e) => {
+                            // Prevent infinite error loops
+                            e.target.onerror = null
+                            // Swap to fallback if Google CDN fails
+                            e.target.src = fallbackAvatar
+                          }}
+                        />
                       ) : (
                         <span className="w-full h-full flex items-center justify-center text-xs font-display font-bold text-ink-950">
-                          {user.name?.[0]?.toUpperCase()}
+                          {user?.name?.[0]?.toUpperCase() || 'U'}
                         </span>
                       )}
                     </div>
                     <div className="text-left">
-                      <p className="text-xs font-display font-600 text-ice-100 leading-none">{user.name?.split(' ')[0]}</p>
+                      <p className="text-xs font-display font-600 text-ice-100 leading-none">{user?.name?.split(' ')[0]}</p>
                       {premium && <p className="text-[10px] text-sky-400 leading-none mt-0.5">Premium</p>}
                     </div>
                     <ChevronDown className={`w-3.5 h-3.5 text-ice-400 transition-transform ${dropdown ? 'rotate-180' : ''}`} />
@@ -131,7 +161,7 @@ export default function Navbar() {
                           Dashboard
                         </Link>
                         {user.role === 'admin' && (
-                          <Link to="/admin" className="flex items-center gap-2.5 px-4 py-3 text-sm text-amber-400 hover:bg-amber-400/5 transition-colors">
+                          <Link to="/admin" className="flex items-center gap-2.5 px-4 py-3 text-sm text-sky-400 hover:bg-sky-400/5 transition-colors">
                             <Shield className="w-4 h-4" />
                             Admin Panel
                           </Link>
@@ -184,7 +214,7 @@ export default function Navbar() {
                   key={to}
                   to={to}
                   className={`flex items-center gap-3 px-4 py-4 rounded-xl text-base font-body font-500 transition-all ${
-                    highlight ? 'text-amber-400' : 'text-ice-200'
+                    highlight ? 'text-sky-400' : 'text-ice-200'
                   }`}
                   style={{ border: '1px solid rgba(255,255,255,0.05)' }}
                 >

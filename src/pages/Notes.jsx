@@ -185,7 +185,7 @@ const ChapterCard = ({ chapter, hasAccess, onClick, subject }) => {
   return (
     <motion.div
       whileHover={{ y: -2 }}
-      onClick={() => (!isPremium || hasAccess(3)) && onClick(chapter)}
+      onClick={() => (!isPremium || hasAccess()) && onClick(chapter)}
       className={`card p-5 cursor-pointer group relative  overflow-hidden bg-gray-800/50 border border-gray-700 rounded-xl hover:border-sky-500/50 transition-all ${isPremium && !hasAccess(3) ? 'opacity-60' : ''}`}
     >
       <div className="flex items-start justify-between mb-3">
@@ -202,7 +202,7 @@ const ChapterCard = ({ chapter, hasAccess, onClick, subject }) => {
         {chapter.name}
       </h3>
       <p className="text-xs text-ice-500">{chapter.topics} {chapter.topics === 1 ? 'Topic' : 'Topics'}</p>
-      {isPremium && !hasAccess(3) && (
+      {isPremium && !hasAccess() && (
         <div className="absolute inset-0 bg-ink-900/60 backdrop-blur-[1px] flex items-center justify-center">
           <Lock className="w-6 h-6 text-sky-400" />
         </div>
@@ -327,7 +327,7 @@ const Homepage = () => {
               <h2 className="text-4xl md:text-6xl font-bold text-white mb-4 tracking-tight">
                 Choose Your <span className="bg-gradient-to-r from-sky-400 via-blue-500 to-sky-600 bg-clip-text text-transparent">Subject</span>
               </h2>
-              <p className="text-ice-400 text-lg max-w-2xl mx-auto">Access premium study materials, notes, and resources for JEE & Engineering exams</p>
+              <p className="text-ice-400 text-lg max-w-2xl mx-auto">Access premium study materials, notes and resources for  exams</p>
             </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
